@@ -43,4 +43,4 @@ node local-checkin.mjs resume
 
 Linux/macOS 目录保持 `0700`，文件初始为 `0600`。Windows 使用原生 ACL 检查当前用户与受信任系统主体；共享权限拒绝执行。符号链接、硬链接、无效 JSON、损坏状态及变化后的锁均拒绝，不自动删除未知锁。
 
-旧 `github-cookie.txt` 文件不读取、不迁移、不删除。请自行妥善清理不再需要的 GitHub 高权限 Cookie，勿提交至仓库。配置和运行工具需要自己有权使用的 AgentRouter 账号。
+工具只读取该私有目录中的 `credentials.json`，不读取其他登录凭据文件。请勿把 Cookie、API Key 或系统访问令牌写入该目录。配置和运行工具需要自己有权使用的 AgentRouter 账号。

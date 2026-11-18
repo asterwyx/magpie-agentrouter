@@ -49,8 +49,7 @@ async function capture(t, options = {}, body = history(), input = url, extra = {
     return options[key];
   } } });
   const auth = { type: "api", key: "synthetic-api-key", metadata: {
-    cookie: "session=synthetic-site-cookie", accessToken: "synthetic-management-token",
-    githubCookie: "user_session=synthetic-github-cookie", userId: "42",
+    cookie: "fixture-cookie-value", accessToken: "fixture-access-token", userId: "42",
   } };
   const loader = await p.auth.loader(async () => auth, {});
   const init = { method: "POST", body: JSON.stringify(body, null, 2), ...extra };
@@ -176,7 +175,7 @@ test("the installed loader can switch cleanup on and off between requests withou
   const headers = new Headers(calls[0].init.headers);
   assert.equal(headers.get("authorization"), "Bearer synthetic-api-key");
   assert.equal(headers.has("cookie"), false);
-  for (const secret of ["synthetic-site-cookie", "synthetic-management-token", "synthetic-github-cookie"])
+  for (const secret of ["fixture-cookie-value", "fixture-access-token"])
     assert.equal(JSON.stringify(calls).includes(secret), false);
 });
 

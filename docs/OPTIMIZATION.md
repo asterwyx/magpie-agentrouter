@@ -18,7 +18,7 @@ Each field is validated before network access. A missing or malformed field, or 
 | Balance | System access token + login-derived user ID | `GET /api/user/self` |
 | Models and inference | Model API Key | `GET /v1/models`, `/v1/responses` |
 
-Account requests are restricted to the two trusted AgentRouter site origins and the two expected paths, with redirects disabled, a 64 KiB response bound, a 30 second deadline, and cancellation support. Password, API Key and system token are never sent together or used as fallbacks for another operation. No OAuth route, browser flow, copied Cookie, token-generation endpoint, or model-key auto-selection is used.
+Account requests are restricted to the two trusted AgentRouter site origins and the two expected paths, with redirects disabled, a 64 KiB response bound, a 30 second deadline, and cancellation support. Password, API Key and system token are never used as fallbacks for another operation. No browser flow, copied Cookie, token-generation endpoint, or model-key auto-selection is used.
 
 The balance reader requires the returned account ID to match the ID established by password login. If the service does not provide valid quota fields, the balance is unknown; spend is not converted to a fabricated balance. Error messages do not include the upstream message or submitted values.
 

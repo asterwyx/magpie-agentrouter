@@ -35,7 +35,7 @@ function assessPullRequest(pr, files) {
   if (names.some(name => /^(request|content-filter|body-inspection)\.mjs$/.test(name))) {
     warnings.push('请求/内容边界：人工核对 assistant output_text、call_id、opaque reasoning/引用、显式降级及不自动重试约定；补独立反例，不仅改旧测试预期。');
   }
-  if (names.some(name => /^(session|github-cookie|oauth-guidance|index|local-checkin)\.mjs$/.test(name))) {
+  if (names.some(name => /^(index|account|models|local-checkin)\.mjs$/.test(name))) {
     warnings.push('认证/运行时：检查凭据脱敏、域边界、交互登录、签到限流和真实网络副作用。');
   }
   if (names.some(name => name.startsWith('.github/'))) {

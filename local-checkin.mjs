@@ -142,7 +142,7 @@ async function readState(home) {
 }
 
 async function writeState(home, state) {
-  // Never write the auth object, response body, OAuth code or exception text.
+  // Never write the auth object, response body, login response or exception text.
   const temporary = path.join(home, ".state-" + randomUUID() + ".tmp");
   try {
     await fs.writeFile(temporary, JSON.stringify(state, null, 2) + "\n", { flag: "wx", mode: 0o600 });

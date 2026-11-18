@@ -4,12 +4,11 @@ import plugin from "./index.mjs";
 
 const url = "https://example.test/v1/responses";
 const auth = { type: "api", key: "synthetic-model-key", metadata: {
-  githubCookieMode: "configure", githubCookie: "user_session=synthetic-github-cookie; logged_in=yes",
-  cookie: "session=synthetic-site-cookie", accessToken: "synthetic-access-token", userId: "123",
+  cookie: "fixture-cookie-value",
   username: "fixture-user", password: "fixture-password",
 } };
 
-test("login cookies and site token never enter model requests during inline replay", async t => {
+test("site credentials and incoming cookies never enter model requests during inline replay", async t => {
   const originalFetch = globalThis.fetch;
   t.after(() => { globalThis.fetch = originalFetch; });
   const calls = [];
@@ -20,14 +19,14 @@ test("login cookies and site token never enter model requests during inline repl
     const body = JSON.stringify({ input: [{ type: "message", id: "msg_resource_a", role: "assistant", content: [
       { type: "output_text", text: "Synthetic response", annotations: [], logprobs: [] },
     ] }] });
-    await loader.fetch(url, { method: "POST", body, headers: { Cookie: "session=obsolete", "New-Api-User": "123" } });
+    await loader.fetch(url, { method: "POST", body, headers: { Cookie: "fixture-incoming-cookie", "New-Api-User": "123" } });
     const sent = calls.at(-1).init;
     const headers = new Headers(sent.headers);
     assert.equal(headers.get("authorization"), "Bearer synthetic-model-key");
     assert.equal(headers.has("cookie"), false);
     assert.equal(headers.has("new-api-user"), false);
     const wire = JSON.stringify({ headers: [...headers], body: sent.body });
-    for (const privateValue of ["synthetic-github-cookie", "synthetic-site-cookie", "synthetic-access-token", "fixture-password", "fixture-user"])
+    for (const privateValue of ["fixture-cookie-value", "fixture-incoming-cookie", "fixture-password", "fixture-user"])
       assert.equal(wire.includes(privateValue), false);
     assert.equal(JSON.parse(sent.body).input[0].id, enabled ? undefined : "msg_resource_a");
     assert.deepEqual(JSON.parse(sent.body).input[0].content, JSON.parse(body).input[0].content);

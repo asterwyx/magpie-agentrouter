@@ -39,11 +39,6 @@ test("saved flat account fields also work", async t => {
   assert.equal((await run(t, { success: true, data: { id: 42, checked_in: true } }, 200, { type: "api", key: "sk-fixture", ...metadata })).result.outcome, "claimed");
 });
 
-test("stale GitHub metadata never triggers OAuth", async t => {
-  const auth = { key: "sk-fixture", metadata: { ...metadata, githubCookie: "user_session=obsolete", githubCookieMode: "configure" } };
-  assert.equal((await run(t, { success: true, data: { id: 42, checked_in: true } }, 200, auth)).result.outcome, "claimed");
-});
-
 for (const [name, data, status, outcome] of [
   ["wrong password", { success: false, message: metadata.password }, 200, "ineligible"],
   ["wrong account", { success: true, data: { id: 99, checked_in: true } }, 200, "ineligible"],
@@ -56,8 +51,8 @@ for (const [name, data, status, outcome] of [
   assert.equal((await run(t, data, status)).result.outcome, outcome);
 });
 
-test("missing password does not try model Key, token or cookies", async t => {
-  const { result, calls } = await run(t, {}, 200, { key: "sk-fixture", metadata: { accessToken: metadata.accessToken, githubCookie: "user_session=old" } });
+test("missing password does not try the model Key or token", async t => {
+  const { result, calls } = await run(t, {}, 200, { key: "sk-fixture", metadata: { accessToken: metadata.accessToken } });
   assert.equal(result.outcome, "ineligible");
   assert.equal(calls.length, 0);
 });
