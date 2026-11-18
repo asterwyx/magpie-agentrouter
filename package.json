@@ -1,12 +1,12 @@
 {
   "name": "magpie-agentrouter",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "description": "Magpie AgentRouter 插件：站点按钮选择、四项独立凭据、动态模型信息、余额与每日签到",
   "type": "module",
   "main": "./src/index.mjs",
   "scripts": {
     "test:policy": "node --test .github/scripts/pr-policy.test.cjs",
-    "test": "node --test test/models.test.mjs test/body-inspection.test.mjs test/usage.test.mjs test/loader-stream.test.mjs test/response-bounds.test.mjs test/checkin.test.mjs test/request-replay.test.mjs test/content-filter.test.mjs test/auth-guidance.test.mjs test/auth-flow.test.mjs test/resource-compat.test.mjs test/auth-request-boundary.test.mjs test/response-preservation.test.mjs test/session-repair.test.mjs",
+    "test": "node --test test/models.test.mjs test/body-inspection.test.mjs test/usage.test.mjs test/loader-stream.test.mjs test/response-bounds.test.mjs test/checkin.test.mjs test/request-replay.test.mjs test/auth-guidance.test.mjs test/auth-flow.test.mjs test/resource-compat.test.mjs test/auth-request-boundary.test.mjs test/response-preservation.test.mjs test/session-repair.test.mjs",
     "test:session-repair": "node --test test/session-repair.test.mjs",
     "test:magpie-ui": "node --test test/magpie-ui.test.mjs",
     "test:headers": "python3 test/set-ar-headers.test.py"
@@ -20,8 +20,6 @@
     "src/request.mjs",
     "src/session-repair.mjs",
     "src/body-inspection.mjs",
-    "src/content-filter.mjs",
-    "src/content-filter.example.json",
     "assets/agentrouter.png",
     "README.md",
     "CHANGELOG.md",

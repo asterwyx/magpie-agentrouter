@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.1.5 — 2026-11-18
+
+- Remove the local content-filter feature completely: filter module, example file, `text-filter` plugin option, request-rewrite branch, tests, docs, and ignore rules.
+- Keep upstream content-blocked response diagnostics, Responses inline replay, and optional Codex session repair.
+- No authentication, model, balance, or check-in behavior changes from 0.1.4.
+
 ## 0.1.4 — 2026-11-18
 
 - Move the AgentRouter source icon to `assets/agentrouter.png` and include it in the published package.
