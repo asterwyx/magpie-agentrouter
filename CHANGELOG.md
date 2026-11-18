@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.1.1 — 2026-11-18
+
+- Replace the combined JSON credential field with four separate native fields: username, password, API Key, and system access token.
+- Embed the AgentRouter China site favicon as a PNG data URI so the installed plugin and provider icons load without a remote request.
+- Keep the two site buttons, credential separation, live model metadata, balance, check-in, and request/response compatibility unchanged.
+
 ## 0.1.0 — initial Magpie release
 
 - Rebrand the standalone repository/package to `magpie-agentrouter`; plugin and provider display name are AgentRouter, provider/model prefix defaults to `agentrouter`.
