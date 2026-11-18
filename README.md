@@ -144,7 +144,7 @@ node --check account.mjs
 npm pack --dry-run
 ```
 
-认证测试覆盖四字段一次提交、无浏览器/回调、用途隔离、错误与取消、同账号校验及签到结果。模拟接口测试不等于真实 AgentRouter 账号实测。
+认证测试覆盖四个独立字段、最终一次授权、无浏览器/回调、用途隔离、错误与取消、同账号校验及签到结果。模拟接口测试不等于真实 AgentRouter 账号实测。
 
 `npm run test:magpie-ui` 是可选真实 Magpie 网页交互测试。只允许隔离的本地地址：指定 `MAGPIE_TEST_WEB_URL`、该沙盒的 `MAGPIE_TEST_WEB_KEY` 和外部安装的 `playwright-core` 的入口路径 `PLAYWRIGHT_MODULE`。须先启动只使用模拟账号的 Magpie/接口沙盒；该测试不接受真实账号凭据，也不在普通 `npm test` 或发布包中安装浏览器依赖。
 
