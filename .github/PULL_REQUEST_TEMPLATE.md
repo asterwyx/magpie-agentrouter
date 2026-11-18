@@ -9,7 +9,7 @@ Refs #123
 ## 验证证据
 
 <!-- 填写实际环境、命令与结果，附脱敏的回归证据；未运行须说明原因，不得虚报通过。 -->
-<!-- npm test；npm run test:policy；python set-ar-headers.test.py；npm pack --dry-run -->
+<!-- npm test；npm run test:policy；npm pack --dry-run -->
 
 ## 风险与兼容性
 

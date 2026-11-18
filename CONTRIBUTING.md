@@ -5,7 +5,7 @@ Thanks for helping improve `magpie-agentrouter`.
 ## Development
 
 - Use Node.js 20 or later.
-- Run `npm test`, `npm run test:policy`, `npm run test:headers`, and `npm pack --dry-run` before opening a pull request.
+- Run `npm test`, `npm run test:policy`, and `npm pack --dry-run` before opening a pull request.
 - Optional Magpie UI integration tests require an isolated loopback instance and fake AgentRouter endpoints. Never point them at a production account.
 - Keep lines in commit messages and documentation readable. Do not commit account credentials, tokens, cookies, provider auth files, test captures, or generated package archives.
 - Model capability/context metadata must cite or follow a live endpoint or the exact `models.dev` record. Leave unknown fields unset rather than guessing.

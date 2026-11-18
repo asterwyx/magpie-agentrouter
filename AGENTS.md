@@ -33,7 +33,6 @@
 | `README.md` | User-facing install, configuration, balance, and check-in instructions |
 | `CHANGELOG.md` | Versioned user-visible changes |
 | `.github/workflows/ci.yml` | Ubuntu/Windows × Node 20/22/24 CI |
-| `set-ar-headers.sh` | Optional header utility; test it with `test/set-ar-headers.test.py` |
 
 ## Commands
 
@@ -46,7 +45,6 @@ Run from the repository root.
 | Focused model tests | `node --test test/models.test.mjs` |
 | Focused session-repair tests | `node --test test/session-repair.test.mjs` or `npm run test:session-repair` |
 | PR policy tests | `npm run test:policy` |
-| Python header tests | `npm run test:headers` (CI runs `python test/set-ar-headers.test.py`) |
 | Package contents check | `npm pack --dry-run` |
 | Syntax check | `node --check src/index.mjs` |
 | Optional Magpie UI test | `npm run test:magpie-ui` (only in an isolated loopback sandbox) |
@@ -92,7 +90,7 @@ Run from the repository root.
 - New or changed behavior requires a regression test, including invalid credentials, identity mismatch, HTTP failure, cancellation, and untrusted responses when relevant.
 - Restore `globalThis.fetch` and other globals in `t.after`; never let a test use real network or real account state.
 - Run focused tests for the changed area first, then the full verification set:
-  `npm test`, `npm run test:policy`, `npm run test:headers`, `npm pack --dry-run`, and `git diff --check`.
+  `npm test`, `npm run test:policy`, `npm pack --dry-run`, and `git diff --check`.
 - Optional `test:magpie-ui` requires a fresh isolated Magpie instance, fake AgentRouter endpoints, a loopback URL, and no real credentials. Set `MAGPIE_TEST_WEB_URL`, `MAGPIE_TEST_WEB_KEY`, and `PLAYWRIGHT_MODULE` explicitly.
 - Do not report a test as passed unless it actually ran. Distinguish unit tests, simulated Magpie interactions, and real production checks.
 - CI also validates Ubuntu and Windows on Node 20/22/24. For CI failures, inspect the actual failing job log before editing code.

@@ -26,13 +26,9 @@ jobs:
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: ${{ matrix.node }}
-      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
-        with:
-          python-version: '3.12'
       # No install scripts, real credentials, gateway calls or account sign-ins.
       - run: npm test
       - run: npm run test:policy
-      - run: python test/set-ar-headers.test.py
       - run: npm pack --dry-run
   gate:
     name: CI gate

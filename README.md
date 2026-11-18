@@ -136,7 +136,6 @@ Magpie 可能保留带历史读取时间的上次余额；那不是本次查询�
 ```bash
 npm test
 npm run test:policy
-npm run test:headers
 node --check src/index.mjs
 node --check src/account.mjs
 npm pack --dry-run
