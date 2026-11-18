@@ -20,13 +20,11 @@
 
 | Path | Responsibility |
 |---|---|
-| `src/index.mjs` | Plugin entry, auth methods, model loading, balance, check-in, options, request headers |
+| `src/index.mjs` | Plugin entry, auth methods, model loading, balance, check-in, request headers |
 | `src/account.mjs` | Credential validation, password login, user-ID verification, balance, password check-in |
 | `src/models.mjs` | Model catalog and enrichment with live AgentRouter/pricing data |
-| `src/request.mjs` | Responses inline replay and optional Codex session repair |
 | `src/response.mjs` | Bounded upstream error diagnosis and stream handling |
-| `src/session-repair.mjs` | Optional, explicitly enabled resource-binding cleanup |
-| `src/body-inspection.mjs` | Bounded request-body inspection |
+| `src/body-inspection.mjs` | Bounded response-body inspection |
 | `test/` | All Node/Python tests and fixtures; no production tests |
 | `assets/agentrouter.png` | AgentRouter source icon; `package.json` also embeds it as data URI |
 | `docs/OPTIMIZATION.md` | Current design boundaries and evidence sources |
@@ -43,7 +41,6 @@ Run from the repository root.
 | Full Node test suite | `npm test` |
 | Focused auth tests | `node --test test/auth-flow.test.mjs test/auth-guidance.test.mjs test/checkin.test.mjs` |
 | Focused model tests | `node --test test/models.test.mjs` |
-| Focused session-repair tests | `node --test test/session-repair.test.mjs` or `npm run test:session-repair` |
 | PR policy tests | `npm run test:policy` |
 | Package contents check | `npm pack --dry-run` |
 | Syntax check | `node --check src/index.mjs` |
@@ -57,7 +54,7 @@ Run from the repository root.
 - When moving files, update relative imports, `package.json` `main`/`exports`/`files`, test scripts, CI commands, and documentation together.
 - Do not add runtime dependencies without a demonstrated need; current implementation uses Node built-ins.
 - Do not use `keyless: true` for sign-in methods. Magpie treats it as a public/shared account. Native password prompts must remain masked.
-- Keep only two provider options: `portable-responses` and `codex-session-repair`.
+- The provider exposes no boolean options. Do not reintroduce request-body rewriting, inline history replay, or session repair.
 - Always send Magpie's Codex CLI header preset on model requests: `User-Agent: codex_cli_rs/0.167.0 (Mac OS 26.6.0; arm64) Apple_Terminal/455`, `originator: codex_cli_rs`, and `version: 0.167.0`. Do not add an option to omit them or let metadata replace them.
 - Preserve bounded reads, request/response compatibility, and no automatic model-request retries. Do not reintroduce plugin-driven retries, account switching, or lossy history cleanup by default; Magpie's own routing is outside this rule.
 - Do not silently change a public field's meaning. If behavior changes, update tests and the user documentation in the same change.
