@@ -1,5 +1,14 @@
 # AGENTS.md
 
+## Output Language Guidelines
+
+- Do not invent terms. Use established, standard terminology that people can understand for every concept.
+- Use complete wording; do not arbitrarily shorten phrases. For example, in Chinese, write “两个字的版本”, not “两字版本”.
+- When describing a specific operation, use a complete verb-object phrase that states both the action and its target.
+- Do not use nontechnical jargon such as “落地”, “钉死”, or “对齐”. Use plain, common words that readers with primary- or secondary-school education can understand.
+- Keep code identifiers in their original English form. Never translate them.
+- Keep proper names and technical terms in English when English is more appropriate; do not force a Chinese translation.
+
 ## Project Overview
 
 - `magpie-agentrouter` is a Magpie provider plugin for AgentRouter models, account/password login, balance, and daily check-in.
@@ -45,7 +54,7 @@ Run from the repository root.
 ## Change Rules
 
 - Make the smallest change that fixes the reported problem; do not mix in unrelated refactoring or formatting.
-- One fix, one commit, with a focused message and a regression test. Keep the release commit separate.
+- One fix or one behavior change per implementation commit, with a focused message and a regression test. Keep the release commit separate.
 - Preserve the current source/test split: runtime modules in `src/`, tests in `test/`. Tests import from `../src/...`.
 - When moving files, update relative imports, `package.json` `main`/`exports`/`files`, test scripts, CI commands, and documentation together.
 - Do not add runtime dependencies without a demonstrated need; current implementation uses Node built-ins.
@@ -89,10 +98,13 @@ Run from the repository root.
 
 ## Git and Release
 
-- After a fix passes verification and has no known remaining issue, push it to `main` promptly. Do not force-push or rewrite the remote history.
-- Each released fix gets its own smallest version bump: `0.1.0` → `0.1.1` → `0.1.2`, and so on.
+- Rapid, agile delivery means verifying, committing, pushing, and releasing each fix or behavior change promptly, rather than collecting unrelated changes into a later release. Do not skip verification to deliver faster.
+- After a fix or behavior change passes verification and has no known remaining issue, push its implementation commit to `main` promptly, then complete its separate release. Do not force-push or rewrite the remote history.
+- One fix commit corresponds to one patch version increment and its own release, for example `0.1.2` → `0.1.3`.
+- One behavior-change commit corresponds to one minor version increment and its own release; reset the patch version to zero, for example `0.1.3` → `0.2.0`.
+- Restoring intended behavior is a fix; intentionally adding, changing, or removing package behavior is a behavior change.
 - Put version number, `CHANGELOG.md`, and release notes in a separate release commit. Push that commit, create the matching `vX.Y.Z` tag, then create the GitHub release.
-- Documentation-only or CI-only changes do not require a version bump unless they change package behavior. Do not create a release solely for a CI path correction.
+- Changes that neither fix package behavior nor change it, such as CI, documentation, or test maintenance, must be committed and pushed without a version increment, release tag, or GitHub release. Classify changes by their effect on the package, not by the files they touch; a CI path correction alone does not require a release.
 - Before release, the tree must be clean and all verification must pass. Do not publish unverified code, real credentials, private data, or unsupported claims.
 - Release notes describe only verified behavior and current limitations; they are not a substitute for tests.
 
