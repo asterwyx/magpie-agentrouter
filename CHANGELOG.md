@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.2.0 — 2026-11-18
+
+- Show the AgentRouter login email as the Magpie account name instead of the API-key mask or the vendor's internal username, including when a balance read fails.
+- Save the login email as `metadata.email` on new sign-ins. An existing account can be signed in again or given `magpie accounts alias` to show it.
+- No authentication, model, balance, or check-in request behavior changes from 0.1.5.
+
 ## 0.1.5 — 2026-11-18
 
 - Remove the local content-filter feature completely: filter module, example file, `text-filter` plugin option, request-rewrite branch, tests, docs, and ignore rules.
