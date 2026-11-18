@@ -3,11 +3,11 @@
 ## Output Language Guidelines
 
 - Do not invent terms. Use established, standard terminology that people can understand for every concept.
-- Use complete wording; do not arbitrarily shorten phrases. For example, in Chinese, write “两个字的版本”, not “两字版本”.
+- Use complete wording; do not arbitrarily shorten phrases or abbreviate words for brevity.
 - When describing a specific operation, use a complete verb-object phrase that states both the action and its target.
-- Do not use nontechnical jargon such as “落地”, “钉死”, or “对齐”. Use plain, common words that readers with primary- or secondary-school education can understand.
+- Do not use nontechnical jargon or internal slang. Use plain, common words that readers with primary- or secondary-school education can understand.
 - Keep code identifiers in their original English form. Never translate them.
-- Keep proper names and technical terms in English when English is more appropriate; do not force a Chinese translation.
+- Keep proper names and technical terms in English when English is more appropriate; do not force a translation.
 
 ## Project Overview
 
@@ -29,9 +29,7 @@
 | `assets/agentrouter.png` | AgentRouter source icon; `package.json` also embeds it as data URI |
 | `docs/OPTIMIZATION.md` | Current design boundaries and evidence sources |
 | `README.md` | English user-facing install, configuration, balance, and check-in instructions |
-| `README.zh-CN.md` | Chinese user-facing instructions |
 | `CHANGELOG.md` | English versioned user-visible changes |
-| `CHANGELOG.zh-CN.md` | Chinese versioned user-visible changes |
 | `.github/workflows/ci.yml` | Ubuntu/Windows × Node 20/22/24 CI |
 
 ## Commands
@@ -103,7 +101,7 @@ Run from the repository root.
 - One fix commit corresponds to one patch version increment and its own release, for example `0.1.2` → `0.1.3`.
 - One behavior-change commit corresponds to one minor version increment and its own release; reset the patch version to zero, for example `0.1.3` → `0.2.0`.
 - Restoring intended behavior is a fix; intentionally adding, changing, or removing package behavior is a behavior change.
-- Put version number, `CHANGELOG.md`, `CHANGELOG.zh-CN.md`, and release notes in a separate release commit. Push that commit, create the matching `vX.Y.Z` tag, then create the GitHub release.
+- Put version number, `CHANGELOG.md`, and release notes in a separate release commit. Push that commit, create the matching `vX.Y.Z` tag, then create the GitHub release.
 - Changes that neither fix package behavior nor change it, such as CI, documentation, or test maintenance, must be committed and pushed without a version increment, release tag, or GitHub release. Classify changes by their effect on the package, not by the files they touch; a CI path correction alone does not require a release.
 - Before release, the tree must be clean and all verification must pass. Do not publish unverified code, real credentials, private data, or unsupported claims.
 - Release notes describe only verified behavior and current limitations; they are not a substitute for tests.
@@ -117,11 +115,8 @@ Run from the repository root.
 
 ## References
 
-- `README.md`: English install and current user behavior.
-- `README.zh-CN.md`: Chinese install and current user behavior.
-- `CHANGELOG.md`: English versioned changes.
-- `CHANGELOG.zh-CN.md`: Chinese versioned changes.
+- `README.md`: install and current user behavior.
+- `CHANGELOG.md`: versioned changes.
 - `docs/OPTIMIZATION.md`: current architecture, boundaries, and evidence sources.
-- `CONTRIBUTING.md`: English contributor workflow and fix/release rules.
-- `CONTRIBUTING.zh-CN.md`: Chinese contributor workflow and fix/release rules.
+- `CONTRIBUTING.md`: contributor workflow and fix/release rules.
 - `.github/workflows/ci.yml`: CI matrix and exact commands.

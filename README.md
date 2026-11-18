@@ -1,6 +1,6 @@
 # magpie-agentrouter
 
-[English](README.md) · [中文](README.zh-CN.md)
+[English](README.md) · [中文](README.zh_CN.md)
 
 A Magpie provider plugin for AgentRouter. It lets you use AgentRouter models in Magpie, read the account balance, and enable daily check-in.
 

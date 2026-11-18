@@ -1,6 +1,6 @@
 # magpie-agentrouter
 
-[English](README.md) · [中文](README.zh-CN.md)
+[English](README.md) · [中文](README.zh_CN.md)
 
 AgentRouter 的 Magpie 提供商插件。安装后可以在 Magpie 中使用 AgentRouter 模型、查看余额，并启用每日签到。
 
@@ -100,6 +100,6 @@ Magpie 中已有同 ID 的旧提供商。插件仍可正常使用；如需恢复
 
 ## 链接
 
-- [贡献指南](CONTRIBUTING.zh-CN.md)
-- [变更记录](CHANGELOG.zh-CN.md)
+- [贡献指南](CONTRIBUTING.zh_CN.md)
+- [变更记录](CHANGELOG.zh_CN.md)
 - [MIT 许可证](LICENSE)

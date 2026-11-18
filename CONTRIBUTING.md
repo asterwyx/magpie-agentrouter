@@ -1,6 +1,6 @@
 # Contributing
 
-[English](CONTRIBUTING.md) · [中文](CONTRIBUTING.zh-CN.md)
+[English](CONTRIBUTING.md) · [中文](CONTRIBUTING.zh_CN.md)
 
 Thanks for helping improve `magpie-agentrouter`.
 
