@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.1.2 — 2026-11-18
+
+- Remove stale test fixtures, CI warnings, and documentation references for retired GitHub, OAuth, and standalone system-token login methods.
+- Keep the credential-boundary regression that prevents login credentials, cookies, and management tokens from entering model requests.
+- No runtime authentication behavior changes from 0.1.1.
+
 ## 0.1.1 — 2026-11-18
 
 - Replace the combined JSON credential field with four separate native fields: username, password, API Key, and system access token.
