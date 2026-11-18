@@ -77,5 +77,5 @@ test("missing management token or ID makes no request", async t => {
 test("endpoint compatibility and declared models are preserved", () => {
   assert.equal(_internal.apiBase({}, { metadata: { endpoint: "sk-fixture" } }), "https://agentrouter.org/v1");
   assert.equal(_internal.apiBase({}, { metadata: { endpoint: "https://relay.test" } }), "https://relay.test/v1");
-  assert.deepEqual(Object.keys(_internal.declaredModels()), ["gpt-5.6-sol", "gpt-6.1-sol", "gpt-6-astra"]);
+  assert.deepEqual(Object.keys(_internal.declaredModels()), ["gpt-5.6-sol", "gpt-6.1-sol"]);
 });

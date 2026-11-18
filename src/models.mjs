@@ -118,7 +118,6 @@ export const MODEL_CATALOG = {
 export const PRICING_FALLBACK = [
   { model_name: "gpt-5.6-sol", supported_endpoint_types: ["openai"] },
   { model_name: "gpt-6.1-sol", supported_endpoint_types: ["openai"] },
-  { model_name: "gpt-6-astra", supported_endpoint_types: ["openai"] },
 ];
 
 export function enrichModel(model, pricing = {}) {

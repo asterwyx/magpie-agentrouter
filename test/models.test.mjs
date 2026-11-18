@@ -112,6 +112,5 @@ test("fallback is restricted to the current public pricing snapshot", async t =>
   const models = await p.provider.models({}, { auth: null });
   assert.deepEqual(Object.keys(models), PRICING_FALLBACK.map(m => m.model_name));
   assert.equal(models["gpt-5.6-sol"].limit.context, MODEL_CATALOG["gpt-5.6-sol"].limit.context);
-  assert.equal(models["gpt-6-astra"].limit.context, 1_050_000);
-  assert.deepEqual(Object.keys(models["gpt-6-astra"].variants), ["low", "medium", "high", "xhigh", "max"]);
+  assert.equal(Object.hasOwn(models, "gpt-6-astra"), false);
 });
