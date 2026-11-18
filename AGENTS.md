@@ -74,6 +74,7 @@ Run from the repository root.
 - Save the model API Key only in the account's `key` field. Password and system token stay in metadata for their own hooks.
 - Do not reintroduce OAuth, browser callbacks, GitHub Cookie flows, standalone system-token login, automatic model-Key lookup, token generation, a separate local check-in tool, or local content filtering.
 - Never commit or print real credentials, provider auth files, private prompts, or user conversation data. Tests use synthetic credentials and no real network.
+- Never edit `plugin-auth.json`, its `.bak`, or auto-backups directly, even for a preview or migration. Use Magpie's sign-in flow, `magpie accounts alias`, or the plugin's official `client.auth.set`; a direct write can be overwritten or force Magpie onto a stale backup.
 
 ## Model Metadata Rules
 
