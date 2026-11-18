@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import plugin from "./index.mjs";
-import { ACCOUNT_PROMPTS } from "./account.mjs";
+import plugin from "../src/index.mjs";
+import { ACCOUNT_PROMPTS } from "../src/account.mjs";
 
 const inputs = { username: "fixture-user", password: " fixture-password ", apiKey: "sk-fixture", accessToken: "fixture-token" };
 const login = (data = { id: 42, checked_in: true }) => Response.json({ success: true, data });

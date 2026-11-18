@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import plugin from "./index.mjs";
+import plugin from "../src/index.mjs";
 
 const metadata = { username: "fixture-user", password: "fixture-password", accessToken: "fixture-token", userId: "42" };
 async function run(t, data, status = 200, auth = { key: "sk-fixture", metadata }) {

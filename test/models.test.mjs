@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { enrichModel, MODEL_CATALOG, PRICING_FALLBACK } from "./models.mjs";
-import plugin from "./index.mjs";
+import { enrichModel, MODEL_CATALOG, PRICING_FALLBACK } from "../src/models.mjs";
+import plugin from "../src/index.mjs";
 
 
 test("verified catalog exposes context, modalities, tools and thinking tiers", () => {

@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import plugin, { _internal } from "./index.mjs";
+import plugin, { _internal } from "../src/index.mjs";
 
 const metadata = { username: "fixture-user", password: "fixture-password", accessToken: "fixture-token", userId: "42", cookie: "session=obsolete" };
 async function usage(t, response, auth = { key: "sk-fixture", metadata }, provider = {}) {

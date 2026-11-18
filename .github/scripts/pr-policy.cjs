@@ -32,11 +32,11 @@ function assessPullRequest(pr, files) {
     }
   }
   const names = files.map(file => file.filename);
-  if (names.some(name => /^(request|content-filter|body-inspection)\.mjs$/.test(name))) {
+  if (names.some(name => /(?:^|\/)src\/(request|content-filter|body-inspection)\.mjs$/.test(name))) {
     warnings.push('请求/内容边界：人工核对 assistant output_text、call_id、opaque reasoning/引用、显式降级及不自动重试约定；补独立反例，不仅改旧测试预期。');
   }
-  if (names.some(name => /^(index|account|models|local-checkin)\.mjs$/.test(name))) {
-    warnings.push('认证/运行时：检查凭据脱敏、域边界、交互登录、签到限流和真实网络副作用。');
+  if (names.some(name => /(?:^|\/)src\/(index|account|models)\.mjs$/.test(name))) {
+    warnings.push('认证/运行时：检查凭据脱敏、域边界、交互登录和真实网络副作用。');
   }
   if (names.some(name => name.startsWith('.github/'))) {
     warnings.push('自动化：检查最小权限、固定 Action SHA 和 fork 隔离；pull_request_target 绝不执行 PR 代码或下载 PR 产物。');

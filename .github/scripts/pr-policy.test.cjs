@@ -31,9 +31,9 @@ test('only actual dependabot account gets body exemption', () => {
   assert.equal(assessPullRequest({ title: 'chore(deps): bump', user: { login: 'dependabot-lookalike' } }, []).errors.length, 5);
 });
 test('request, runtime, automation, missing tests and large diffs trigger risk advice', () => {
-  const files = [{ filename: 'request.mjs', additions: 801 }, { filename: 'index.mjs' }, { filename: '.github/workflows/ci.yml' }];
+  const files = [{ filename: 'src/request.mjs', additions: 801 }, { filename: 'src/index.mjs' }, { filename: '.github/workflows/ci.yml' }];
   assert.equal(assessPullRequest(good, files).warnings.length, 5);
-  assert.equal(assessPullRequest(good, [...files, { filename: 'request.test.mjs' }]).warnings.length, 4);
+  assert.equal(assessPullRequest(good, [...files, { filename: 'test/request.test.mjs' }]).warnings.length, 4);
 });
 function harness({ pr = good, files = [], comments = [], failList = false } = {}) {
   const events = [];

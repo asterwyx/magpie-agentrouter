@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import plugin from "./index.mjs";
+import plugin from "../src/index.mjs";
 
 const credentials = { username: "fixture-user", password: "fixture-password", apiKey: "sk-fixture-model", accessToken: "fixture-management" };
 

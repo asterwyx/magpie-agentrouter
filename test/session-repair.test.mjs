@@ -4,9 +4,9 @@ import { readFile, copyFile, mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { pathToFileURL } from "node:url";
-import plugin from "./index.mjs";
-import { prepareRequest } from "./request.mjs";
-import { repairSessionResources } from "./session-repair.mjs";
+import plugin from "../src/index.mjs";
+import { prepareRequest } from "../src/request.mjs";
+import { repairSessionResources } from "../src/session-repair.mjs";
 
 const url = "https://agentrouter.org/v1/responses";
 const id = prefix => `${prefix}_0123456789abcdef0123456789abcdef`;
@@ -78,9 +78,9 @@ test("provider switches have Chinese labels and descriptions with unchanged exis
     assert.ok(option.description.length <= 300);
     assert.ok((option.confirm?.length ?? 0) <= 300);
   }
-  const pkg = JSON.parse(await readFile(new URL("./package.json", import.meta.url), "utf8"));
+  const pkg = JSON.parse(await readFile(new URL("../package.json", import.meta.url), "utf8"));
   assert.match(pkg.description, /[\u4e00-\u9fff]/);
-  assert.ok(pkg.files.includes("session-repair.mjs"));
+  assert.ok(pkg.files.includes("src/session-repair.mjs"));
 });
 
 test("resource repair is off by default even when the existing options are on", async t => {
@@ -360,9 +360,9 @@ test("cleanup retains the existing four MiB UTF-8 inspection bound", async () =>
 test("cleanup, prose filtering and portable replay stay independently configurable in an installed package", async t => {
   const directory = await mkdtemp(join(tmpdir(), "ar-session-repair-"));
   t.after(() => rm(directory, { recursive: true, force: true }));
-  const pkg = JSON.parse(await readFile(new URL("./package.json", import.meta.url), "utf8"));
+  const pkg = JSON.parse(await readFile(new URL("../package.json", import.meta.url), "utf8"));
   for (const file of pkg.files.filter(file => file.endsWith(".mjs"))) {
-    await copyFile(new URL(file, import.meta.url), join(directory, file));
+    await copyFile(new URL("../" + file, import.meta.url), join(directory, file.split("/").pop()));
   }
   await writeFile(join(directory, "content-filter.local.json"), JSON.stringify({ terms: ["Checking"] }));
   const installedPlugin = (await import(pathToFileURL(join(directory, "index.mjs")).href)).default;
