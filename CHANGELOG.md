@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.3.0 — 2026-11-18
+
+- Always read balance from the international site `https://agentrouter.org/api/user/self`, including for domestic-site accounts; token validation at sign-in does the same.
+- Keep login and check-in on the selected site; model discovery and inference roots are unchanged.
+- No credential, model, or check-in request behavior changes beyond the balance URL.
+
 ## 0.2.1 — 2026-11-18
 
 - Revert the 0.2.0 account-name change: `usage()` no longer returns the login email, and new sign-ins no longer save `metadata.email`.
