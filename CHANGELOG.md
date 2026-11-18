@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.6.0 — 2026-11-19
+
+- Balance queries prefer the selected site and fall back to the other trusted AgentRouter site for network, upstream, captcha, invalid-response, or untrusted-site failures, using the same system token.
+- Credential rejection and identity mismatch do not fall back; login and check-in stay on the selected site.
+- No model, request-header, or check-in behavior changes.
+
 ## 0.5.1 — 2026-11-19
 
 - Remove GPT-6 Astra from the default pre-login fallback. AgentRouter's live `/v1/models` exposes GPT-5.6 Sol and GPT-6.1 Sol.
