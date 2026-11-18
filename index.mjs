@@ -2,7 +2,7 @@ import { explainResponse } from "./response.mjs";
 import { prepareRequest } from "./request.mjs";
 import { loadTextFilter } from "./content-filter.mjs";
 import { SessionRepairError } from "./session-repair.mjs";
-import { SITES, meta, CREDENTIAL_PROMPT, authorizeAccount, usableModelKey,
+import { SITES, meta, ACCOUNT_PROMPTS, authorizeAccount, usableModelKey,
   tokenBalance, passwordCheckin, accountError } from "./account.mjs";
 import { MODEL_CATALOG, PRICING_FALLBACK, enrichModel } from "./models.mjs";
 
@@ -189,11 +189,11 @@ export const AgentRouterAuthPlugin = async (input, options = {}) => {
     auth: {
       provider: PROVIDER,
       methods: [
-        { type: "api", label: "AgentRouter 国际站", prompts: [CREDENTIAL_PROMPT],
-          // A method choice renders as buttons in Magpie. Credentials then go
-          // together in one masked submission, without a region dropdown.
+        { type: "api", label: "AgentRouter 国际站", prompts: ACCOUNT_PROMPTS,
+          // A method choice renders as buttons in Magpie. Each credential is
+          // then its own native field: username, password, API key, token.
           authorize: (inputs, context) => authorizeAccount(inputs, "org", context?.signal) },
-        { type: "api", label: "AgentRouter 国内站", prompts: [CREDENTIAL_PROMPT],
+        { type: "api", label: "AgentRouter 国内站", prompts: ACCOUNT_PROMPTS,
           authorize: (inputs, context) => authorizeAccount(inputs, "air", context?.signal) },
       ],
       async loader(getAuth, provider) {

@@ -4,7 +4,7 @@ import plugin from "./index.mjs";
 
 const credentials = { username: "fixture-user", password: "fixture-password", apiKey: "sk-fixture-model", accessToken: "fixture-management" };
 
-test("site selection is two buttons, followed by one masked four-credential submission", async () => {
+test("site selection is two buttons, followed by four separate credential fields", async () => {
   for (const input of [undefined, { magpie: {} }]) {
     const p = await plugin(input);
     assert.equal(p.auth.methods.length, 2);
@@ -12,8 +12,8 @@ test("site selection is two buttons, followed by one masked four-credential subm
     for (const m of p.auth.methods) {
       assert.equal(m.type, "api");
       assert.equal(m.keyless, undefined);
-      assert.deepEqual(m.prompts.map(p => p.key), ["credentials"]);
-      assert.equal(m.prompts[0].type, "password");
+      assert.deepEqual(m.prompts.map(p => p.key), ["username", "password", "apiKey", "accessToken"]);
+      assert.deepEqual(m.prompts.map(p => p.type), ["text", "password", "password", "password"]);
     }
   }
 });
@@ -55,7 +55,7 @@ test("four answers complete login, models, balance and password check-in without
     assert.fail("unexpected request: " + url.pathname);
   };
   const p = await plugin({ magpie: {} });
-  const saved = await p.auth.methods[0].authorize({ credentials: JSON.stringify(credentials) });
+  const saved = await p.auth.methods[0].authorize(credentials);
   assert.equal(saved.type, "success");
   assert.equal(saved.key, credentials.apiKey);
   assert.equal(saved.metadata.userId, "42");
@@ -77,7 +77,7 @@ test("four answers complete login, models, balance and password check-in without
   assert.deepEqual(calls.map(c => c.path), ["/api/user/login", "/api/user/self", "/api/pricing", "/v1/models", "/api/user/self", "/api/user/login", "/v1/responses"]);
 });
 
-test("the domestic-site button keeps all four credentials in the same single submission", async t => {
+test("the domestic-site button uses its four separate credential fields and keeps all requests on that site", async t => {
   const original = globalThis.fetch;
   t.after(() => { globalThis.fetch = original; });
   const hosts = [];
@@ -94,7 +94,7 @@ test("the domestic-site button keeps all four credentials in the same single sub
     assert.fail("unexpected domestic request " + url.pathname);
   };
   const p = await plugin();
-  const result = await p.auth.methods[1].authorize({ credentials: JSON.stringify(credentials) });
+  const result = await p.auth.methods[1].authorize(credentials);
   assert.equal(result.type, "success");
   assert.equal(result.metadata.site, "air");
   assert.equal(result.metadata.apiBase, "https://ps.air-outer.com/v1");

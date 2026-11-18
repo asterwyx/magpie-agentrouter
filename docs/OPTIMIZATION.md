@@ -6,13 +6,9 @@ This repository is the standalone `magpie-agentrouter` Magpie provider plugin. M
 
 ## Sign-in interaction
 
-Magpie's provider plugin protocol presents one prompt at a time. The plugin therefore exposes two API-method buttons, one for each site. After the site choice, the user submits a single masked JSON value with exactly four string keys:
+Magpie's provider plugin protocol presents one prompt at a time. The plugin exposes two API-method buttons, one for each site. After the site choice it asks four separate native prompts: username, password, API key, and system access token. Password and both tokens are masked by Magpie. There is no JSON bundle or combined text field.
 
-```json
-{"username":"…","password":"…","apiKey":"sk-…","accessToken":"…"}
-```
-
-This is one credential submission, not four sequential questions. The bundle has a 16 KiB maximum and rejects missing, extra, malformed, identical API/system token, or invalid fields before network access. The username, password, API key and system token are saved separately to their intended fields.
+Each field is validated before network access. A missing or malformed field, or an API key identical to the system token, fails without contacting AgentRouter. The username, password, API key and system token are saved separately to their intended fields.
 
 ## Credential boundaries
 
@@ -40,4 +36,4 @@ Balance is queried only when Magpie asks the usage hook. It does not trigger a l
 
 ## UI and tests
 
-`npm test` covers credential bundle validation, one-shot authorization, site separation, model metadata enrichment, credential request boundaries, balance, check-in and existing request/response compatibility. `npm run test:magpie-ui` optionally verifies the actual Magpie UI with an isolated loopback Magpie process and fake AgentRouter service. It checks the two site buttons, one masked credential field, one sign-in submission and no browser popup.
+`npm test` covers four-field credential validation, site separation, model metadata enrichment, credential request boundaries, balance, check-in and existing request/response compatibility. `npm run test:magpie-ui` optionally verifies the actual Magpie UI with an isolated loopback Magpie process and fake AgentRouter service. It checks the two site buttons, four separate prompts, one final sign-in submission and no browser popup.

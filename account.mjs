@@ -22,32 +22,16 @@ const numericId = value => /^[1-9][0-9]*$/.test(String(value ?? "")) ? String(va
 const required = value => text(value) && !/[\x00-\x1f\x7f]/.test(value) && value.length <= 4096;
 const tokenValid = value => required(value) && !/\s/.test(text(value));
 
-export function parseCredentialBundle(value) {
-  if (typeof value !== "string" || value.length > 16 * 1024) return { error: "请一次性填写四项凭据的 JSON 对象。" };
-  let bundle;
-  try { bundle = JSON.parse(value); } catch { return { error: "凭据格式无效，请按提示填写四项 JSON 字段。" }; }
-  if (!bundle || typeof bundle !== "object" || Array.isArray(bundle) ||
-      Object.keys(bundle).some(k => !["username", "password", "apiKey", "accessToken"].includes(k)) ||
-      Object.keys(bundle).length !== 4) {
-    return { error: "凭据对象必须且只能包含 username、password、apiKey、accessToken 四项。" };
-  }
-  const username = text(bundle.username), password = bundle.password;
-  const apiKey = text(bundle.apiKey), accessToken = text(bundle.accessToken);
-  if (!required(username)) return { error: "username 必须是有效的账号字符串。" };
-  if (!required(password)) return { error: "password 必须是有效的密码字符串。" };
-  if (!tokenValid(apiKey) || !usableModelKey(apiKey)) return { error: "apiKey 必须是完整模型 API Key。" };
-  if (!tokenValid(accessToken)) return { error: "accessToken 必须是有效系统访问令牌。" };
-  if (apiKey === accessToken) return { error: "API Key 与系统访问令牌用途不同，不能填写为同一个值。" };
-  return { credentials: { username, password, apiKey, accessToken } };
-}
-
-export const CREDENTIAL_PROMPT = {
-  type: "password",
-  key: "credentials",
-  message: "一次提交四项凭据 JSON（账号、密码、API Key、系统访问令牌；整体遮蔽）",
-  placeholder: "{\"username\":\"账号\",\"password\":\"密码\",\"apiKey\":\"模型 API Key\",\"accessToken\":\"系统访问令牌\"}",
-  validate: value => parseCredentialBundle(value).error,
-};
+export const ACCOUNT_PROMPTS = [
+  { type: "text", key: "username", message: "AgentRouter 账号",
+    validate: value => required(value) ? undefined : "请输入有效的 AgentRouter 账号" },
+  { type: "password", key: "password", message: "AgentRouter 密码（用于登录签到）",
+    validate: value => required(value) ? undefined : "请输入有效的 AgentRouter 密码" },
+  { type: "password", key: "apiKey", message: "API Key（用于模型列表和模型调用）",
+    validate: value => tokenValid(value) && usableModelKey(value) ? undefined : "请输入完整的模型 API Key" },
+  { type: "password", key: "accessToken", message: "系统访问令牌（用于查询余额；不是 API Key）",
+    validate: value => tokenValid(value) ? undefined : "请输入有效的系统访问令牌" },
+];
 
 async function requestJSON(url, init, signal) {
   const deadline = AbortSignal.timeout(30_000);
@@ -166,9 +150,15 @@ export async function authorizeAccount(inputs, site = "org", signal) {
   if (inputs?.site && !["org", "air"].includes(inputs.site)) {
     return { type: "failed", error: "请选择 AgentRouter 国际站或国内站。" };
   }
-  const parsed = parseCredentialBundle(inputs?.credentials);
-  if (parsed.error) return { type: "failed", error: parsed.error };
-  const { username, password, apiKey: key, accessToken } = parsed.credentials;
+  for (const prompt of ACCOUNT_PROMPTS) {
+    const error = prompt.validate(inputs?.[prompt.key]);
+    if (error) return { type: "failed", error };
+  }
+  const username = text(inputs.username);
+  const password = inputs.password;
+  const key = text(inputs.apiKey);
+  const accessToken = text(inputs.accessToken);
+  if (key === accessToken) return { type: "failed", error: "API Key 与系统访问令牌用途不同，不能填写为同一个值。" };
   const selected = site === "air" || inputs?.site === "air" ? "air" : "org";
   const base = SITES[selected].site;
   const login = await passwordLogin(base, { metadata: { username, password } }, signal);
