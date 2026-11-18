@@ -1,30 +1,28 @@
-# Contributing
+# 贡献指南
 
-[English](CONTRIBUTING.md) · [中文](CONTRIBUTING.zh_CN.md)
+感谢你帮助改进 `magpie-agentrouter`。
 
-Thanks for helping improve `magpie-agentrouter`.
+## 开发
 
-## Development
+- 使用 Node.js 20 或更高版本。
+- 提交 Pull Request 前运行 `npm test`、`npm run test:policy` 和 `npm pack --dry-run`。
+- 可选的 Magpie 网页集成测试需要隔离的本机回环实例和模拟 AgentRouter 接口。不要连接生产账号。
+- 保持提交信息和文档行文清晰。不要提交账号凭据、令牌、Cookie、提供商认证文件、测试抓包或生成的包归档。
+- 模型能力和上下文元数据必须引用实时接口或精确的 `models.dev` 记录。未知字段保持未设置，不要猜测。
 
-- Use Node.js 20 or later.
-- Run `npm test`, `npm run test:policy`, and `npm pack --dry-run` before opening a pull request.
-- Optional Magpie UI integration tests require an isolated loopback instance and fake AgentRouter endpoints. Never point them at a production account.
-- Keep lines in commit messages and documentation readable. Do not commit account credentials, tokens, cookies, provider auth files, test captures, or generated package archives.
-- Model capability and context metadata must cite or follow a live endpoint or the exact `models.dev` record. Leave unknown fields unset rather than guessing.
+## 修复与发布规则
 
-## Fix and release rules
+- 用最小的改动修复报告的问题。不要在同一次修改中重构无关代码。
+- 一个修复对应一个提交。修复提交包含回归测试和聚焦的提交信息。
+- 一个修复对应一个小版本。每个已发布修复递增最小版本号，例如 `0.1.0` → `0.1.1`，然后 `0.1.2`。
+- 修复通过检查且没有已知问题后，立即推送到 `main`。
+- 版本号更新放在单独的发布提交中，然后创建对应的 Git tag 和 release。
+- 不要在修复提交中混入无关修复、文档重写或格式调整。
 
-- Make the smallest change that fixes the reported problem. Do not refactor unrelated code in the same change.
-- One fix, one commit. Each fix commit includes its regression test and a focused message.
-- One fix, one small version. Bump the smallest version component for each released fix: for example `0.1.0` → `0.1.1`, then `0.1.2`.
-- Push a completed fix to `main` immediately when its checks pass and no known issue remains.
-- Keep the version bump in its own release commit, then create the matching Git tag and release.
-- Do not combine unrelated fixes, documentation rewrites, or formatting into a fix commit.
+## Pull Request
 
-## Pull requests
+向 `main` 提交 Pull Request。说明行为变化、兼容性影响和已执行的验证；相关时链接 Issue。不要在 PR 中包含真实 API Key、密码、访问令牌、私人消息或生产账号响应。
 
-Open a pull request against `main`. Explain the behavior change, compatibility impact, and verification performed. Link an issue when relevant. Do not include real API keys, passwords, access tokens, private messages, or production account responses in the PR.
+## 安全报告
 
-## Security reports
-
-Use GitHub's private security advisory for this repository. Do not disclose vulnerabilities, credentials, exploit samples, or private data in public issues or discussions.
+请使用本仓库的 GitHub 私密安全公告。不要在公开 Issue 或讨论中披露漏洞、凭据、利用样本或私人数据。

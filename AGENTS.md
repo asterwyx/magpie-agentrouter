@@ -27,8 +27,8 @@
 | `src/body-inspection.mjs` | Bounded response-body inspection |
 | `test/` | All Node tests and fixtures; no production tests |
 | `assets/agentrouter.png` | AgentRouter source icon; `package.json` also embeds it as data URI |
-| `README.md` | English user-facing install, configuration, balance, and check-in instructions |
-| `CHANGELOG.md` | English versioned user-visible changes |
+| `README.md` | User-facing install, configuration, balance, and check-in instructions |
+| `CHANGELOG.md` | Versioned user-visible changes |
 | `.github/workflows/ci.yml` | Ubuntu/Windows × Node 20/22/24 CI |
 
 ## Commands
