@@ -20,6 +20,8 @@ Each field is validated before network access. A missing or malformed field, or 
 
 Account requests are restricted to the two trusted AgentRouter site origins and the two expected paths, with redirects disabled, a 64 KiB response bound, a 30 second deadline, and cancellation support. Password, API Key and system token are never used as fallbacks for another operation. No browser flow, copied Cookie, token-generation endpoint, or model-key auto-selection is used.
 
+Model requests always send Magpie's Codex CLI preset headers: `User-Agent: codex_cli_rs/0.167.0 (Mac OS 26.6.0; arm64) Apple_Terminal/455`, `originator: codex_cli_rs`, `version: 0.167.0`, and `Accept: application/json`. The old `send-codex-headers` option is gone; custom metadata headers may add other fields but cannot replace these four.
+
 The balance reader requires the returned account ID to match the ID established by password login. If the service does not provide valid quota fields, the balance is unknown; spend is not converted to a fabricated balance. Error messages do not include the upstream message or submitted values.
 
 ## Model metadata

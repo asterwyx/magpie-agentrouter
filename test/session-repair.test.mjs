@@ -60,8 +60,7 @@ async function capture(t, options = {}, body = history(), input = url, extra = {
 test("provider switches have Chinese labels and descriptions with unchanged existing defaults", async () => {
   const p = await plugin();
   assert.deepEqual(p.auth.options.map(({ key, default: value }) => [key, value]), [
-    ["portable-responses", true], ["send-codex-headers", true],
-    ["codex-session-repair", false],
+    ["portable-responses", true], ["codex-session-repair", false],
   ]);
   for (const option of p.auth.options) {
     assert.match(option.label, /[\u4e00-\u9fff]/);

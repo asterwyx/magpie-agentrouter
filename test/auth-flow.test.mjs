@@ -1,8 +1,13 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import plugin from "../src/index.mjs";
+import plugin, { _internal } from "../src/index.mjs";
 
 const credentials = { username: "fixture-user", password: "fixture-password", apiKey: "sk-fixture-model", accessToken: "fixture-management" };
+const codexHeaders = {
+  "user-agent": "codex_cli_rs/0.167.0 (Mac OS 26.6.0; arm64) Apple_Terminal/455",
+  originator: "codex_cli_rs",
+  version: "0.167.0",
+};
 
 test("site selection is two buttons, followed by four separate credential fields", async () => {
   for (const input of [undefined, { magpie: {} }]) {
@@ -46,10 +51,12 @@ test("four answers complete login, models, balance and password check-in without
     if (url.pathname === "/v1/models") {
       assert.equal(headers.get("authorization"), "Bearer " + credentials.apiKey);
       assert.equal(headers.has("new-api-user"), false);
+      for (const [name, value] of Object.entries(codexHeaders)) assert.equal(headers.get(name), value);
       return Response.json({ data: [{ id: "fixture-model", context_length: 8192, max_output_tokens: 2048, reasoning: true }] });
     }
     if (url.pathname === "/v1/responses") {
       assert.equal(headers.get("authorization"), "Bearer " + credentials.apiKey);
+      for (const [name, value] of Object.entries(codexHeaders)) assert.equal(headers.get(name), value);
       return Response.json({ id: "resp_fixture", output: [{ type: "message", content: [{ type: "output_text", text: "ok" }] }] });
     }
     assert.fail("unexpected request: " + url.pathname);
@@ -75,6 +82,16 @@ test("four answers complete login, models, balance and password check-in without
   const loader = await p.auth.loader(async () => auth, {});
   assert.equal((await loader.fetch("https://agentrouter.org/v1/responses", { method: "POST", body: "{}" })).status, 200);
   assert.deepEqual(calls.map(c => c.path), ["/api/user/login", "/api/user/self", "/api/pricing", "/v1/models", "/api/user/self", "/api/user/login", "/v1/responses"]);
+});
+
+test("model headers always use Magpie's Codex CLI preset", () => {
+  const headers = _internal.headersOf({}, { metadata: {
+    headers: "User-Agent: custom\noriginator: custom\nversion: 9\nX-Fixture: keep",
+  } });
+  assert.equal(headers["User-Agent"], codexHeaders["user-agent"]);
+  assert.equal(headers.originator, codexHeaders.originator);
+  assert.equal(headers.version, codexHeaders.version);
+  assert.equal(headers["X-Fixture"], "keep");
 });
 
 test("the domestic-site button keeps login on that site and checks the token on the international site", async t => {

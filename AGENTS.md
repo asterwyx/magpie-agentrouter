@@ -57,7 +57,8 @@ Run from the repository root.
 - When moving files, update relative imports, `package.json` `main`/`exports`/`files`, test scripts, CI commands, and documentation together.
 - Do not add runtime dependencies without a demonstrated need; current implementation uses Node built-ins.
 - Do not use `keyless: true` for sign-in methods. Magpie treats it as a public/shared account. Native password prompts must remain masked.
-- Keep only three provider options: `send-codex-headers`, `portable-responses`, and `codex-session-repair`.
+- Keep only two provider options: `portable-responses` and `codex-session-repair`.
+- Always send Magpie's Codex CLI header preset on model requests: `User-Agent: codex_cli_rs/0.167.0 (Mac OS 26.6.0; arm64) Apple_Terminal/455`, `originator: codex_cli_rs`, and `version: 0.167.0`. Do not add an option to omit them or let metadata replace them.
 - Preserve bounded reads, request/response compatibility, and no automatic model-request retries. Do not reintroduce plugin-driven retries, account switching, or lossy history cleanup by default; Magpie's own routing is outside this rule.
 - Do not silently change a public field's meaning. If behavior changes, update tests and the user documentation in the same change.
 

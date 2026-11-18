@@ -7,7 +7,14 @@ import { MODEL_CATALOG, PRICING_FALLBACK, enrichModel } from "./models.mjs";
 
 const PROVIDER = "agentrouter";
 const ENDPOINT = SITES.org.api;
-const DEFAULT_HEADERS = { "User-Agent": "codex_cli_rs/0.101.0", Accept: "application/json" };
+// Match Magpie's Codex CLI header preset exactly. These headers are always
+// sent on model requests; there is no option to omit or replace them.
+const DEFAULT_HEADERS = {
+  "User-Agent": "codex_cli_rs/0.167.0 (Mac OS 26.6.0; arm64) Apple_Terminal/455",
+  originator: "codex_cli_rs",
+  version: "0.167.0",
+  Accept: "application/json",
+};
 const DECLARED_MODELS = Object.fromEntries(PRICING_FALLBACK.map(m => [m.model_name, MODEL_CATALOG[m.model_name]?.name ?? m.model_name]));
 
 // Compatibility helpers for existing endpoint/header metadata. Authentication
@@ -39,16 +46,19 @@ function modelHeaders(provider) {
   return out;
 }
 
-function headersOf(provider, auth, codex = true) {
+function headersOf(provider, auth) {
   const out = {
-    ...(codex ? { "User-Agent": DEFAULT_HEADERS["User-Agent"] } : {}),
-    Accept: DEFAULT_HEADERS.Accept, ...modelHeaders(provider),
+    ...modelHeaders(provider),
     ...parseHeaders(provider?.headers), ...parseHeaders(meta(auth, "headers")),
   };
+  // The Codex preset is authoritative: custom metadata may add other
+  // headers, but cannot replace or omit these four.
   for (const name of Object.keys(out)) {
-    if (/^(authorization|proxy-authorization|cookie|new-api-user|x-api-key)$/i.test(name)) delete out[name];
+    if (/^(authorization|proxy-authorization|cookie|new-api-user|x-api-key|user-agent|originator|version|accept)$/i.test(name)) {
+      delete out[name];
+    }
   }
-  return out;
+  return Object.assign(out, DEFAULT_HEADERS);
 }
 
 function isURLish(v) { return /^https?:\/\/\S+$/i.test(String(v ?? "").trim()); }
@@ -120,7 +130,7 @@ async function pricingOf(site, signal) {
   } catch { return new Map(); }
 }
 
-async function modelsOf(provider, { auth } = {}, codex = true) {
+async function modelsOf(provider, { auth } = {}) {
   const key = apiKey(auth);
   const site = siteBase(provider, auth);
   const api = apiBase(provider, auth);
@@ -134,7 +144,7 @@ async function modelsOf(provider, { auth } = {}, codex = true) {
   try {
     const [res, prices] = await Promise.all([
       fetch(`${api}/models`, {
-        headers: { ...headersOf(provider, auth, codex), Authorization: `Bearer ${key}` },
+        headers: { ...headersOf(provider, auth), Authorization: `Bearer ${key}` },
         redirect: "manual", signal,
       }),
       pricesPromise,
@@ -178,7 +188,6 @@ async function checkinOf(getAuth, provider, context) {
 }
 
 export const AgentRouterAuthPlugin = async (input, options = {}) => {
-  const codex = () => input?.magpie?.option?.(PROVIDER, "send-codex-headers") !== false;
   const portable = () => input?.magpie?.option?.(PROVIDER, "portable-responses") !== false;
   const repairing = () => input?.magpie?.option?.(PROVIDER, "codex-session-repair") === true;
   return {
@@ -208,7 +217,7 @@ export const AgentRouterAuthPlugin = async (input, options = {}) => {
             } }, { status: 400 });
             const h = new Headers(input instanceof Request ? input.headers : undefined);
             new Headers(init.headers ?? {}).forEach((v, k) => h.set(k, v));
-            applyHeaders(h, headersOf(provider, auth, codex()));
+            applyHeaders(h, headersOf(provider, auth));
             for (const name of ["Cookie", "Proxy-Authorization", "New-Api-User", "X-Api-Key"]) h.delete(name);
             h.set("Authorization", `Bearer ${key}`);
             let prepared;
@@ -230,14 +239,12 @@ export const AgentRouterAuthPlugin = async (input, options = {}) => {
       options: [
         { key: "portable-responses", label: "内联发送完整的 Responses 历史", default: true,
           description: "仅在内容完整可内联时移除资源绑定的条目 ID，保留 call_id 和加密内容。只有引用的历史仍依赖原资源；关闭只停用无损内联，有损会话清理独立。" },
-        { key: "send-codex-headers", label: "发送 Codex 客户端请求头", default: true,
-          description: "AgentRouter 仅接受受认可的客户端标识。开启时附带 Codex CLI 的默认 User-Agent；关闭时不添加该标识，仍发送自行配置的请求头和默认 Accept。" },
         { key: "codex-session-repair", label: "清理 Codex 会话的旧资源绑定（有损）", default: false,
           description: "默认关闭。发送前清理旧资源 ID、加密/压缩历史及仅引用条目，保留明文消息和工具关联。可能丢失压缩上下文；不修改本地会话文件或数据库，与无损内联独立。",
           confirm: "开启后会丢弃发送副本中的加密、压缩及仅引用历史，可能丢失上下文。不会修复本地日志或数据库；关闭后下一次请求恢复原有处理。确认开启？" },
       ],
     },
-    provider: { id: PROVIDER, models: (provider, context) => modelsOf(provider, context, codex()) },
+    provider: { id: PROVIDER, models: (provider, context) => modelsOf(provider, context) },
     "chat.headers": async (input, output) => {
       if (input?.model?.providerID !== PROVIDER && input?.provider?.info?.id !== PROVIDER) return;
       if (input.sessionID) output.headers["x-session-id"] = input.sessionID;
