@@ -18,7 +18,9 @@
     "src/body-inspection.mjs",
     "assets/agentrouter.png",
     "README.md",
+    "README.zh-CN.md",
     "CHANGELOG.md",
+    "CHANGELOG.zh-CN.md",
     "docs",
     "LICENSE"
   ],
