@@ -1,6 +1,6 @@
 {
   "name": "magpie-agentrouter",
-  "version": "0.5.0",
+  "version": "0.5.1",
   "description": "Magpie AgentRouter 插件：站点按钮选择、四项独立凭据、动态模型信息、余额与每日签到",
   "type": "module",
   "main": "./src/index.mjs",

@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.5.1 — 2026-11-19
+
+- Remove GPT-6 Astra from the default pre-login fallback. AgentRouter's live `/v1/models` exposes GPT-5.6 Sol and GPT-6.1 Sol.
+- Keep GPT-6 Astra catalog metadata for a live response if the site re-enables it.
+- No request, authentication, balance, or check-in behavior changes.
+
 ## 0.5.0 — 2026-11-19
 
 - Remove `portable-responses`: the plugin no longer rewrites Responses history or removes resource-bound item IDs.
