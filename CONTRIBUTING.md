@@ -10,6 +10,15 @@ Thanks for helping improve `magpie-agentrouter`.
 - Keep lines in commit messages and documentation readable. Do not commit account credentials, tokens, cookies, provider auth files, local content filters, test captures, or generated package archives.
 - Model capability/context metadata must cite or follow a live endpoint or the exact `models.dev` record. Leave unknown fields unset rather than guessing.
 
+## Fix and release rules
+
+- Make the smallest change that fixes the reported problem. Do not refactor unrelated code in the same change.
+- One fix, one commit. Each fix commit includes its regression test and a focused message.
+- One fix, one small version. Bump the smallest version component for each released fix: for example `0.1.0` → `0.1.1`, then `0.1.2`.
+- Push a completed fix to `main` immediately when its checks pass and no known issue remains.
+- Keep the version bump in its own release commit, then create the matching Git tag and release.
+- Do not combine unrelated fixes, documentation rewrites, or formatting into a fix commit.
+
 ## Pull requests
 
 Open a pull request against `main`. Explain the behavior change, compatibility impact, and verification performed. Link an Issue when relevant. Do not include real API keys, passwords, access tokens, private messages, or production account responses in the PR.
