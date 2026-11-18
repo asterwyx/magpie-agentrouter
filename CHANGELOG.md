@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.1.4 — 2026-11-18
+
+- Move the AgentRouter source icon to `assets/agentrouter.png` and include it in the published package.
+- Keep the embedded PNG data URI for the Magpie plugin/provider icon.
+- No runtime behavior changes from 0.1.3.
+
 ## 0.1.3 — 2026-11-18
 
 - Remove the optional standalone local check-in tool, including its Windows ACL implementation, tests, documentation, and CI fixture step. Magpie's account/password `auth.checkin` hook remains the only check-in path.
