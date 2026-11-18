@@ -6,7 +6,7 @@
   "main": "./src/index.mjs",
   "scripts": {
     "test:policy": "node --test .github/scripts/pr-policy.test.cjs",
-    "test": "node --test test/models.test.mjs test/body-inspection.test.mjs test/usage.test.mjs test/loader-stream.test.mjs test/response-bounds.test.mjs test/checkin.test.mjs test/auth-guidance.test.mjs test/auth-flow.test.mjs test/auth-request-boundary.test.mjs test/response-preservation.test.mjs",
+    "test": "node --test test/models.test.mjs test/body-inspection.test.mjs test/usage.test.mjs test/loader-stream.test.mjs test/response-bounds.test.mjs test/checkin.test.mjs test/auth-guidance.test.mjs test/auth-auto.test.mjs test/auth-flow.test.mjs test/auth-request-boundary.test.mjs test/response-preservation.test.mjs",
     "test:magpie-ui": "node --test test/magpie-ui.test.mjs"
   },
   "exports": "./src/index.mjs",

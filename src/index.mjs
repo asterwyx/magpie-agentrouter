@@ -196,11 +196,11 @@ export const AgentRouterAuthPlugin = async (input, options = {}) => {
     auth: {
       provider: PROVIDER,
       methods: [
-        { type: "api", label: "AgentRouter 国际站", prompts: ACCOUNT_PROMPTS,
+        { type: "api", label: "AgentRouter 国际站（agentrouter.org）", prompts: ACCOUNT_PROMPTS,
           // A method choice renders as buttons in Magpie. Each credential is
           // then its own native field: username, password, API key, token.
           authorize: (inputs, context) => authorizeAccount(inputs, "org", context?.signal) },
-        { type: "api", label: "AgentRouter 国内站", prompts: ACCOUNT_PROMPTS,
+        { type: "api", label: "AgentRouter 国内站（ps.air-outer.com）", prompts: ACCOUNT_PROMPTS,
           authorize: (inputs, context) => authorizeAccount(inputs, "air", context?.signal) },
       ],
       async loader(getAuth, provider) {

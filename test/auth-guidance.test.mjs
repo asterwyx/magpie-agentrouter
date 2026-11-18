@@ -19,19 +19,23 @@ async function stub(t, responses) {
   return { calls, methods: (await plugin({ magpie: {} })).auth.methods };
 }
 
-test("the four credentials are four separate validated fields", () => {
+test("the four credentials are four separate fields, with the last two optional", () => {
   assert.deepEqual(ACCOUNT_PROMPTS.map(p => p.key), ["username", "password", "apiKey", "accessToken"]);
   assert.deepEqual(ACCOUNT_PROMPTS.map(p => p.type), ["text", "password", "password", "password"]);
-  for (const prompt of ACCOUNT_PROMPTS) {
+  for (const prompt of ACCOUNT_PROMPTS.slice(0, 2)) {
     assert.equal(prompt.validate("valid-value"), undefined);
     assert.equal(typeof prompt.validate(""), "string");
   }
-  assert.equal(ACCOUNT_PROMPTS[2].validate(" "), "请输入完整的模型 API Key");
+  for (const prompt of ACCOUNT_PROMPTS.slice(2)) {
+    assert.equal(prompt.validate(""), undefined);
+    assert.equal(prompt.validate("   "), undefined);
+    assert.match(prompt.message, /可留空/);
+  }
   assert.equal(ACCOUNT_PROMPTS[2].validate("not a key with spaces"), "请输入完整的模型 API Key");
   assert.equal(ACCOUNT_PROMPTS[3].validate("has space"), "请输入有效的系统访问令牌");
 });
 
-for (const key of Object.keys(inputs)) test("missing or invalid " + key + " fails before network", async t => {
+for (const key of ["username", "password"]) test("missing or invalid " + key + " fails before network", async t => {
   const { calls, methods } = await stub(t, []);
   for (const value of [undefined, null, "", "   ", {}, [], 42, "x\r\ninjection"]) {
     const result = await methods[0].authorize({ ...inputs, [key]: value });
@@ -39,6 +43,17 @@ for (const key of Object.keys(inputs)) test("missing or invalid " + key + " fail
     assert.equal(result.key, undefined);
     assert.equal(result.callback, undefined);
   }
+  assert.equal(calls.length, 0);
+});
+
+for (const [key, value, error] of [
+  ["apiKey", "not a key with spaces", "请输入完整的模型 API Key"],
+  ["accessToken", "has space", "请输入有效的系统访问令牌"],
+]) test("invalid " + key + " fails before network", async t => {
+  const { calls, methods } = await stub(t, []);
+  const result = await methods[0].authorize({ ...inputs, [key]: value });
+  assert.equal(result.type, "failed");
+  assert.equal(result.error, error);
   assert.equal(calls.length, 0);
 });
 

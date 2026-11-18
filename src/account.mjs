@@ -1,5 +1,6 @@
 // Account operations are deliberately separate from model requests.
-// Passwords only go to login; management tokens only go to user/self.
+// Passwords only go to login; management tokens and model keys only go to
+// their own endpoints. A login session is used only when a field is blank.
 export const SITES = {
   org: { name: "AgentRouter", api: "https://agentrouter.org", site: "https://agentrouter.org" },
   air: { name: "AgentRouter (ps.air-outer.com)", api: "https://ps.air-outer.com", site: "https://ps.air-outer.com" },
@@ -27,19 +28,55 @@ export const ACCOUNT_PROMPTS = [
     validate: value => required(value) ? undefined : "请输入有效的 AgentRouter 账号" },
   { type: "password", key: "password", message: "AgentRouter 密码（用于登录签到）",
     validate: value => required(value) ? undefined : "请输入有效的 AgentRouter 密码" },
-  { type: "password", key: "apiKey", message: "API Key（用于模型列表和模型调用）",
-    validate: value => tokenValid(value) && usableModelKey(value) ? undefined : "请输入完整的模型 API Key" },
-  { type: "password", key: "accessToken", message: "系统访问令牌（用于查询余额；不是 API Key）",
-    validate: value => tokenValid(value) ? undefined : "请输入有效的系统访问令牌" },
+  { type: "password", key: "apiKey",
+    message: "API Key（可留空：自动查找或创建名为 magpie 的模型 Key）",
+    validate: value => !text(value) ? undefined :
+      tokenValid(value) && usableModelKey(value) ? undefined : "请输入完整的模型 API Key" },
+  { type: "password", key: "accessToken",
+    message: "系统访问令牌（可留空：自动从登录会话读取）",
+    validate: value => !text(value) ? undefined : tokenValid(value) ? undefined : "请输入有效的系统访问令牌" },
 ];
 
-async function requestJSON(url, init, signal) {
+const TOKEN_NAME = "magpie";
+const TOKEN_CREATE_BODY = {
+  name: TOKEN_NAME,
+  expired_time: -1,
+  unlimited_quota: true,
+  remain_quota: 0,
+  model_limits_enabled: false,
+  model_limits: "",
+  allow_ips: "",
+  group: "",
+};
+
+function cookiesOf(headers) {
+  if (!headers) return "";
+  const raw = typeof headers.getSetCookie === "function" ? headers.getSetCookie() : headers.get("set-cookie");
+  const list = Array.isArray(raw) ? raw : raw ? [raw] : [];
+  const cookies = [];
+  for (const value of list) {
+    for (const part of String(value).split(/,(?=\s*[^;=]+=)/)) {
+      const pair = part.split(";", 1)[0].trim();
+      if (pair) cookies.push(pair);
+    }
+  }
+  return cookies.join("; ");
+}
+
+function sessionHeaders(cookie, userId, extra = {}) {
+  return { Accept: "application/json", Cookie: cookie, "New-Api-User": userId, ...extra };
+}
+
+async function requestJSON(url, init, signal, { allowEmptyData = false } = {}) {
   const deadline = AbortSignal.timeout(30_000);
   const combined = signal ? AbortSignal.any([deadline, signal]) : deadline;
   let target;
   try { target = new URL(url); } catch { return { ok: false, why: "untrusted-site" }; }
+  const tokenPath = target.pathname === "/api/token/";
+  const allowedPath = ["/api/user/login", "/api/user/self"].includes(target.pathname) || tokenPath ||
+    /^\/api\/token\/[1-9][0-9]*\/key$/.test(target.pathname);
   if (!Object.values(SITES).some(site => site.site === target.origin) || target.username || target.password ||
-      !["/api/user/login", "/api/user/self"].includes(target.pathname) || target.search || target.hash) {
+      !allowedPath || (target.search && !tokenPath) || target.hash) {
     return { ok: false, why: "untrusted-site" };
   }
   try {
@@ -56,11 +93,18 @@ async function requestJSON(url, init, signal) {
       return { ok: false, why: /^\s*</.test(raw) ? "captcha" : "invalid-response" };
     }
     if (!response.ok) return { ok: false, why: [401, 403].includes(response.status) ? "rejected" : "upstream" };
-    if (data?.success !== true || !data.data || typeof data.data !== "object" || Array.isArray(data.data)) {
+    if (data?.success !== true) {
       // Do not return upstream messages, which can echo submitted secrets.
       return { ok: false, why: data?.success === false ? "rejected" : "invalid-response" };
     }
-    return { ok: true, data: data.data };
+    if (!allowEmptyData && (!data.data || typeof data.data !== "object" || Array.isArray(data.data))) {
+      return { ok: false, why: "invalid-response" };
+    }
+    if (allowEmptyData && data.data !== undefined && data.data !== null &&
+        (typeof data.data !== "object" || Array.isArray(data.data))) {
+      return { ok: false, why: "invalid-response" };
+    }
+    return { ok: true, data: data.data ?? null, headers: response.headers };
   } catch {
     return { ok: false, why: signal?.aborted ? "cancelled" : "network" };
   }
@@ -107,7 +151,73 @@ export async function passwordLogin(base, auth, signal) {
   if (!id) return { ok: false, why: result.data.require_2fa ? "verification" : "missing-id" };
   const expected = numericId(meta(auth, "userId"));
   if (expected && expected !== id) return { ok: false, why: "identity" };
-  return { ok: true, userId: id, checkedIn: result.data.checked_in };
+  return { ok: true, userId: id, checkedIn: result.data.checked_in, cookies: cookiesOf(result.headers) };
+}
+
+async function sessionAccessToken(base, userId, cookie, signal) {
+  if (!cookie) return { ok: false, why: "missing-session" };
+  const result = await requestJSON(base + "/api/user/self", {
+    headers: sessionHeaders(cookie, userId),
+  }, signal);
+  if (!result.ok) return result;
+  const token = text(result.data.access_token);
+  if (!tokenValid(token)) return { ok: false, why: "missing-token" };
+  return { ok: true, token };
+}
+
+function modelKey(value) {
+  const key = text(value);
+  return key ? (key.startsWith("sk-") ? key : `sk-${key}`) : "";
+}
+
+async function listMagpieToken(base, cookie, userId, signal) {
+  const result = await requestJSON(`${base}/api/token/?p=0`, {
+    headers: sessionHeaders(cookie, userId),
+  }, signal);
+  if (!result.ok) return result;
+  const items = Array.isArray(result.data?.items) ? result.data.items : null;
+  if (!items) return { ok: false, why: "invalid-response" };
+  const now = Math.floor(Date.now() / 1000);
+  const token = items.find(item => item && Number(item.status) === 1 &&
+    String(item.name ?? "").trim() === TOKEN_NAME &&
+    (Number(item.expired_time) === -1 || Number(item.expired_time) === 0 || Number(item.expired_time) > now));
+  return { ok: true, token: token ?? null };
+}
+
+async function fullTokenKey(base, token, cookie, userId, signal) {
+  const listed = text(token?.key);
+  if (listed && usableModelKey(listed)) return { ok: true, key: modelKey(listed) };
+  const id = numericId(token?.id);
+  if (!id) return { ok: false, why: "missing-key" };
+  const result = await requestJSON(`${base}/api/token/${id}/key`, {
+    method: "POST", headers: sessionHeaders(cookie, userId),
+  }, signal);
+  if (!result.ok) return result;
+  const key = modelKey(result.data?.key);
+  if (!usableModelKey(key)) return { ok: false, why: "missing-key" };
+  return { ok: true, key };
+}
+
+async function magpieModelKey(base, cookie, userId, signal) {
+  if (!cookie) return { ok: false, why: "missing-session" };
+  const failure = result =>
+    result.why === "cancelled" ||
+    ["network", "upstream", "captcha", "invalid-response", "untrusted-site"].includes(result.why)
+      ? result : { ok: false, why: "missing-key" };
+  let listed = await listMagpieToken(base, cookie, userId, signal);
+  if (!listed.ok) return failure(listed);
+  if (!listed.token) {
+    const created = await requestJSON(`${base}/api/token/`, {
+      method: "POST",
+      headers: sessionHeaders(cookie, userId, { "Content-Type": "application/json" }),
+      body: JSON.stringify(TOKEN_CREATE_BODY),
+    }, signal, { allowEmptyData: true });
+    if (!created.ok) return failure(created);
+    listed = await listMagpieToken(base, cookie, userId, signal);
+    if (!listed.ok || !listed.token) return { ok: false, why: "missing-key" };
+  }
+  const full = await fullTokenKey(base, listed.token, cookie, userId, signal);
+  return full.ok ? full : failure(full);
 }
 
 export async function tokenBalance(base, auth, signal) {
@@ -142,13 +252,15 @@ export async function tokenBalanceWithFallback(primary, alternate, auth, signal)
 
 export function accountError(why, operation) {
   const reasons = {
-    "missing-password": "缺少账号或密码，请通过四项凭据入口重新配置",
-    "missing-token": "缺少系统访问令牌或已验证的用户 ID，请通过四项凭据入口重新配置",
+    "missing-password": "缺少账号或密码，请重新填写登录信息",
+    "missing-token": "没有可用的系统访问令牌，留空时无法从登录会话读取，请填写或稍后重试",
+    "missing-key": "无法自动获取或创建名为 magpie 的模型 API Key，请填写 API Key 或稍后重试",
+    "missing-session": "登录会话不可用，无法自动获取 API Key 或系统访问令牌，请重试或填写对应字段",
     "missing-id": "登录响应缺少用户 ID，不能确认账号身份",
     "missing-quota": "系统访问令牌的余额接口没有返回有效额度字段",
     verification: "站点要求二次验证，插件不会打开浏览器或绕过验证",
     identity: "凭据对应的账号不一致，请核对账号与系统访问令牌",
-    rejected: "站点拒绝了凭据，请核对账号密码或系统访问令牌",
+    rejected: "站点拒绝了凭据，请核对账号密码或填写的系统访问令牌",
     captcha: "接口被站点验证码拦截，插件不会打开浏览器或绕过验证码",
     cancelled: "操作已取消",
     network: "网络请求失败或超时",
@@ -169,18 +281,35 @@ export async function authorizeAccount(inputs, site = "org", signal) {
   }
   const username = text(inputs.username);
   const password = inputs.password;
-  const key = text(inputs.apiKey);
-  const accessToken = text(inputs.accessToken);
-  if (key === accessToken) return { type: "failed", error: "API Key 与系统访问令牌用途不同，不能填写为同一个值。" };
+  const providedKey = text(inputs.apiKey);
+  const providedToken = text(inputs.accessToken);
+  if (providedKey && providedToken && providedKey === providedToken) {
+    return { type: "failed", error: "API Key 与系统访问令牌用途不同，不能填写为同一个值。" };
+  }
   const selected = site === "air" || inputs?.site === "air" ? "air" : "org";
   const base = SITES[selected].site;
   const login = await passwordLogin(base, { metadata: { username, password } }, signal);
   if (!login.ok) return { type: "failed", error: accountError(login.why, "登录") };
+
+  let accessToken = providedToken;
+  if (!accessToken) {
+    const derived = await sessionAccessToken(base, login.userId, login.cookies, signal);
+    if (!derived.ok) return { type: "failed", error: accountError(derived.why, "自动读取系统访问令牌") };
+    accessToken = derived.token;
+  }
+
+  let key = providedKey;
+  if (!key) {
+    const derived = await magpieModelKey(base, login.cookies, login.userId, signal);
+    if (!derived.ok) return { type: "failed", error: accountError(derived.why, "自动获取模型 API Key") };
+    key = derived.key;
+  }
+
   const metadata = { site: selected, username, password, accessToken, userId: login.userId,
     ...(selected === "air" ? { apiBase: `${SITES.air.api}/v1` } : {}) };
-  // Check the token against the login identity without re-logging in or
-  // borrowing a session Cookie. Prefer the selected site and fall back to
-  // the other trusted AgentRouter site only when that site is unavailable.
+  // Check the token against the login identity without re-logging in.
+  // Prefer the selected site and fall back to the other trusted site only
+  // when that site is unavailable.
   const primary = SITES[selected].site;
   const alternate = selected === "air" ? SITES.org.site : SITES.air.site;
   const balance = await tokenBalanceWithFallback(primary, alternate, { metadata }, signal);

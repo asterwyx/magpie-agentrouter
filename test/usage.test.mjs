@@ -104,7 +104,7 @@ test("missing management token or ID makes no request", async t => {
     const { result, calls } = await usage(t, null, { key: "sk-fixture", metadata: md });
     assert.equal(calls.length, 0);
     assert.deepEqual(result.windows, []);
-    assert.match(result.error, /四项凭据/);
+    assert.match(result.error, /系统访问令牌|登录会话/);
   }
 });
 

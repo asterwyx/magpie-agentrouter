@@ -13,7 +13,7 @@
 
 - `magpie-agentrouter` is a Magpie provider plugin for AgentRouter models, account/password login, balance, and daily check-in.
 - Runtime is ESM JavaScript on Node.js 20+. There is no build step; Magpie loads `src/index.mjs` through Bun.
-- Authentication is one flow: two site buttons, then four separate native fields. Magpie renders prompts one at a time; never replace them with a JSON credential bundle.
+- Authentication is one flow: two site buttons with their URLs, then four separate native fields. The API Key and system access token are optional; when blank, the plugin provisions them from the login session. Magpie renders prompts one at a time; never replace them with a JSON credential bundle.
 - The plugin name and provider display name are **AgentRouter**. The declared provider ID/model prefix is `agentrouter`; Magpie may append `-plugin` when an older provider occupies that ID.
 
 ## Repository Map
@@ -21,7 +21,7 @@
 | Path | Responsibility |
 |---|---|
 | `src/index.mjs` | Plugin entry, auth methods, model loading, balance, check-in, request headers |
-| `src/account.mjs` | Credential validation, password login, user-ID verification, balance, password check-in |
+| `src/account.mjs` | Credential validation, password login, session-based optional provisioning, balance, password check-in |
 | `src/models.mjs` | Model catalog and enrichment with live AgentRouter/pricing data |
 | `src/response.mjs` | Bounded upstream error diagnosis and stream handling |
 | `src/body-inspection.mjs` | Bounded response-body inspection |
@@ -38,7 +38,7 @@ Run from the repository root.
 | Task | Command |
 |---|---|
 | Full Node test suite | `npm test` |
-| Focused auth tests | `node --test test/auth-flow.test.mjs test/auth-guidance.test.mjs test/checkin.test.mjs` |
+| Focused auth tests | `node --test test/auth-flow.test.mjs test/auth-guidance.test.mjs test/auth-auto.test.mjs test/checkin.test.mjs` |
 | Focused model tests | `node --test test/models.test.mjs` |
 | PR policy tests | `npm run test:policy` |
 | Package contents check | `npm pack --dry-run` |
@@ -60,15 +60,16 @@ Run from the repository root.
 
 ## Authentication and Security Invariants
 
-- Username/password is used **only** for login and `auth.checkin`; API Key is used **only** for model discovery and model calls; system access token is used **only** for balance.
+- Username/password is used **only** for login, `auth.checkin`, and optional blank-field provisioning; API Key is used **only** for model discovery and model calls; system access token is used **only** for balance.
+- When the API Key is blank, use the login session to find the active token named `magpie` and create it only when absent. `/api/token` returns keys without the `sk-` prefix, so add it before saving. When the system token is blank, read `access_token` from the same login session. The session Cookie is transient: never store it in account metadata, never send it to model requests, and never use it outside the two AgentRouter origins.
 - The user ID comes from the successful login response and is verified on subsequent balance/check-in calls. Do not add a separate user-ID prompt.
 - Balance prefers the selected site and may retry the same system token on the other trusted AgentRouter site only for network, upstream, captcha, invalid-response, or untrusted-site failures. Never fall back on rejected, identity, missing-token, or cancelled outcomes, and never use another credential.
-- Never use another credential as a fallback, never borrow a Cookie, and never send the four credentials together.
+- Never use another credential as a fallback and never send the four credentials together. Do not borrow a Cookie outside the explicit blank-field provisioning flow.
 - Never send account credentials to a host outside the two AgentRouter origins. Do not follow account-endpoint redirects.
 - Reject non-success HTTP status, invalid envelopes, mismatched identities, CAPTCHA, timeouts, and unexpected response shapes without claiming success.
 - Account responses are capped at 64 KiB and requests at 30 seconds. Never echo submitted secrets or raw upstream error text in errors, logs, or fixtures.
 - Save the model API Key only in the account's `key` field. Password and system token stay in metadata for their own hooks.
-- Do not reintroduce OAuth, browser callbacks, GitHub Cookie flows, standalone system-token login, automatic model-Key lookup, token generation, a separate local check-in tool, or local content filtering.
+- Do not reintroduce OAuth, browser callbacks, GitHub Cookie flows, standalone system-token login, a separate local check-in tool, or local content filtering. Automatic token provisioning is limited to finding or creating the single `magpie` model token; never modify or delete other tokens.
 - Never commit or print real credentials, provider auth files, private prompts, or user conversation data. Tests use synthetic credentials and no real network.
 - Never edit `plugin-auth.json`, its `.bak`, or auto-backups directly, even for a preview or migration. Use Magpie's sign-in flow, `magpie accounts alias`, or the plugin's official `client.auth.set`; a direct write can be overwritten or force Magpie onto a stale backup.
 

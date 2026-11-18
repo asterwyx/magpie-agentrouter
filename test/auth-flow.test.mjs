@@ -13,7 +13,10 @@ test("site selection is two buttons, followed by four separate credential fields
   for (const input of [undefined, { magpie: {} }]) {
     const p = await plugin(input);
     assert.equal(p.auth.methods.length, 2);
-    assert.deepEqual(p.auth.methods.map(m => m.label), ["AgentRouter 国际站", "AgentRouter 国内站"]);
+    assert.deepEqual(p.auth.methods.map(m => m.label), [
+      "AgentRouter 国际站（agentrouter.org）",
+      "AgentRouter 国内站（ps.air-outer.com）",
+    ]);
     for (const m of p.auth.methods) {
       assert.equal(m.type, "api");
       assert.equal(m.keyless, undefined);
