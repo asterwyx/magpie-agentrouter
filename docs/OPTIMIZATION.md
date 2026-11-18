@@ -1,0 +1,43 @@
+# Design and verification notes
+
+## Identity and naming
+
+This repository is the standalone `magpie-agentrouter` Magpie provider plugin. Magpie plugin name and provider display name are both AgentRouter. Its provider ID is `agentrouter`, which is also the default model prefix. The package icon embeds the China site's own HTML favicon declaration, `/logo.png`, as a PNG data URI so installation does not depend on icon fetch connectivity.
+
+## Sign-in interaction
+
+Magpie's provider plugin protocol presents one prompt at a time. The plugin therefore exposes two API-method buttons, one for each site. After the site choice, the user submits a single masked JSON value with exactly four string keys:
+
+```json
+{"username":"…","password":"…","apiKey":"sk-…","accessToken":"…"}
+```
+
+This is one credential submission, not four sequential questions. The bundle has a 16 KiB maximum and rejects missing, extra, malformed, identical API/system token, or invalid fields before network access. The username, password, API key and system token are saved separately to their intended fields.
+
+## Credential boundaries
+
+| Operation | Credential sent | Endpoint |
+|---|---|---|
+| Initial login and daily check-in | Username + password | `POST /api/user/login` |
+| Balance | System access token + login-derived user ID | `GET /api/user/self` |
+| Models and inference | Model API Key | `GET /v1/models`, `/v1/responses` |
+
+Account requests are restricted to the two trusted AgentRouter site origins and the two expected paths, with redirects disabled, a 64 KiB response bound, a 30 second deadline, and cancellation support. Password, API Key and system token are never sent together or used as fallbacks for another operation. No OAuth route, browser flow, copied Cookie, token-generation endpoint, or model-key auto-selection is used.
+
+The balance reader requires the returned account ID to match the ID established by password login. If the service does not provide valid quota fields, the balance is unknown; spend is not converted to a fabricated balance. Error messages do not include the upstream message or submitted values.
+
+## Model metadata
+
+For a signed-in account, model discovery uses the account's `/v1/models` list. The selected site's public `/api/pricing` data is joined by exact model ID for currently priced models and endpoint types. Known model capabilities come from exact-ID Magpie `models.dev` entries; GPT-5.6/GPT-6 context, modalities, tool-call and effort metadata are drawn from the corresponding model-provider docs. Live `/v1/models` fields override catalog limits and capabilities.
+
+The pre-login fallback is the verified public pricing snapshot. Facts not supplied by live responses or a named catalog source remain unset. The GPT specs are sourced from [GPT-5.6 Sol](https://developers.openai.com/api/docs/models/gpt-5.6-sol), [GPT-6.1 Sol](https://developers.openai.com/api/docs/models/gpt-6.1-sol), and [GPT-6 Astra](https://developers.openai.com/api/docs/models/gpt-6-astra). The model-provider specification describes upstream capability, not a guarantee that every AgentRouter site/account/group enables it. Unknown context size, output size or reasoning tier is never filled with a generic estimate. The static catalog can age, so post-login model availability always follows the account's API list.
+
+## Check-in and balance scheduling
+
+Magpie owns the daily schedule and calls the plugin's `auth.checkin`; the plugin does not create timers. A successful password-login response counts as `claimed` when `data.checked_in === true`; this is the site's checked-in state and the plugin cannot independently prove that the current login added a new credit, so the UI wording says the site reported the state. `false` is `done`, and a missing/non-boolean marker is not success. Captcha responses are reported as captcha and never bypassed.
+
+Balance is queried only when Magpie asks the usage hook. It does not trigger a login and does not retry through a different credential.
+
+## UI and tests
+
+`npm test` covers credential bundle validation, one-shot authorization, site separation, model metadata enrichment, credential request boundaries, balance, check-in and existing request/response compatibility. `npm run test:magpie-ui` optionally verifies the actual Magpie UI with an isolated loopback Magpie process and fake AgentRouter service. It checks the two site buttons, one masked credential field, one sign-in submission and no browser popup.

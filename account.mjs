@@ -1,0 +1,201 @@
+// Account operations are deliberately separate from model requests.
+// Passwords only go to login; management tokens only go to user/self.
+export const SITES = {
+  org: { name: "AgentRouter", api: "https://agentrouter.org", site: "https://agentrouter.org" },
+  air: { name: "AgentRouter (ps.air-outer.com)", api: "https://ps.air-outer.com", site: "https://ps.air-outer.com" },
+};
+
+export function meta(auth, name) {
+  const flat = auth?.[name];
+  if (flat !== undefined && flat !== null && String(flat).trim() !== "") return flat;
+  return auth?.metadata?.[name];
+}
+
+export function usableModelKey(value) {
+  return typeof value === "string" && !!value.trim() &&
+    !["agentrouter", "your_api_key"].includes(value.trim().toLowerCase()) &&
+    !/[*…<>]|\.\.\.|\s/.test(value.trim());
+}
+
+const text = value => typeof value === "string" ? value.trim() : "";
+const numericId = value => /^[1-9][0-9]*$/.test(String(value ?? "")) ? String(value) : "";
+const required = value => text(value) && !/[\x00-\x1f\x7f]/.test(value) && value.length <= 4096;
+const tokenValid = value => required(value) && !/\s/.test(text(value));
+
+export function parseCredentialBundle(value) {
+  if (typeof value !== "string" || value.length > 16 * 1024) return { error: "请一次性填写四项凭据的 JSON 对象。" };
+  let bundle;
+  try { bundle = JSON.parse(value); } catch { return { error: "凭据格式无效，请按提示填写四项 JSON 字段。" }; }
+  if (!bundle || typeof bundle !== "object" || Array.isArray(bundle) ||
+      Object.keys(bundle).some(k => !["username", "password", "apiKey", "accessToken"].includes(k)) ||
+      Object.keys(bundle).length !== 4) {
+    return { error: "凭据对象必须且只能包含 username、password、apiKey、accessToken 四项。" };
+  }
+  const username = text(bundle.username), password = bundle.password;
+  const apiKey = text(bundle.apiKey), accessToken = text(bundle.accessToken);
+  if (!required(username)) return { error: "username 必须是有效的账号字符串。" };
+  if (!required(password)) return { error: "password 必须是有效的密码字符串。" };
+  if (!tokenValid(apiKey) || !usableModelKey(apiKey)) return { error: "apiKey 必须是完整模型 API Key。" };
+  if (!tokenValid(accessToken)) return { error: "accessToken 必须是有效系统访问令牌。" };
+  if (apiKey === accessToken) return { error: "API Key 与系统访问令牌用途不同，不能填写为同一个值。" };
+  return { credentials: { username, password, apiKey, accessToken } };
+}
+
+export const CREDENTIAL_PROMPT = {
+  type: "password",
+  key: "credentials",
+  message: "一次提交四项凭据 JSON（账号、密码、API Key、系统访问令牌；整体遮蔽）",
+  placeholder: "{\"username\":\"账号\",\"password\":\"密码\",\"apiKey\":\"模型 API Key\",\"accessToken\":\"系统访问令牌\"}",
+  validate: value => parseCredentialBundle(value).error,
+};
+
+async function requestJSON(url, init, signal) {
+  const deadline = AbortSignal.timeout(30_000);
+  const combined = signal ? AbortSignal.any([deadline, signal]) : deadline;
+  let target;
+  try { target = new URL(url); } catch { return { ok: false, why: "untrusted-site" }; }
+  if (!Object.values(SITES).some(site => site.site === target.origin) || target.username || target.password ||
+      !["/api/user/login", "/api/user/self"].includes(target.pathname) || target.search || target.hash) {
+    return { ok: false, why: "untrusted-site" };
+  }
+  try {
+    if (signal?.aborted) return { ok: false, why: "cancelled" };
+    const response = await fetch(url, {
+      ...init, redirect: "manual",
+      signal: combined,
+    });
+    const raw = await accountBody(response, combined);
+    if (signal?.aborted) return { ok: false, why: "cancelled" };
+    if (raw === null) return { ok: false, why: combined.aborted ? "network" : "invalid-response" };
+    let data;
+    try { data = JSON.parse(raw); } catch {
+      return { ok: false, why: /^\s*</.test(raw) ? "captcha" : "invalid-response" };
+    }
+    if (!response.ok) return { ok: false, why: [401, 403].includes(response.status) ? "rejected" : "upstream" };
+    if (data?.success !== true || !data.data || typeof data.data !== "object" || Array.isArray(data.data)) {
+      // Do not return upstream messages, which can echo submitted secrets.
+      return { ok: false, why: data?.success === false ? "rejected" : "invalid-response" };
+    }
+    return { ok: true, data: data.data };
+  } catch {
+    return { ok: false, why: signal?.aborted ? "cancelled" : "network" };
+  }
+}
+
+// Account replies have no streaming consumer: bound and cancel our own read,
+// rather than buffering an unbounded response or exposing its contents.
+async function accountBody(response, signal) {
+  const reader = response.body?.getReader();
+  if (!reader) return "";
+  let abort;
+  const stopped = new Promise((_, reject) => {
+    abort = () => reject(new Error("account read stopped"));
+    signal.addEventListener("abort", abort, { once: true });
+    if (signal.aborted) abort();
+  });
+  try {
+    const decoder = new TextDecoder("utf-8", { fatal: true });
+    let bytes = 0, text = "";
+    for (;;) {
+      const { value, done } = await Promise.race([reader.read(), stopped]);
+      if (done) return text + decoder.decode();
+      bytes += value.byteLength;
+      if (bytes > 64 * 1024) return null;
+      text += decoder.decode(value, { stream: true });
+    }
+  } catch { return null; }
+  finally {
+    signal.removeEventListener("abort", abort);
+    void reader.cancel().catch(() => {});
+  }
+}
+
+export async function passwordLogin(base, auth, signal) {
+  const username = meta(auth, "username");
+  const password = meta(auth, "password");
+  if (!required(username) || !required(password)) return { ok: false, why: "missing-password" };
+  const result = await requestJSON(base + "/api/user/login", {
+    method: "POST", headers: { Accept: "application/json", "Content-Type": "application/json" },
+    body: JSON.stringify({ username: text(username), password }),
+  }, signal);
+  if (!result.ok) return result;
+  const id = numericId(result.data.id);
+  if (!id) return { ok: false, why: result.data.require_2fa ? "verification" : "missing-id" };
+  const expected = numericId(meta(auth, "userId"));
+  if (expected && expected !== id) return { ok: false, why: "identity" };
+  return { ok: true, userId: id, checkedIn: result.data.checked_in };
+}
+
+export async function tokenBalance(base, auth, signal) {
+  const token = text(meta(auth, "accessToken"));
+  const id = numericId(meta(auth, "userId"));
+  if (!tokenValid(token) || !id) return { ok: false, why: "missing-token" };
+  const result = await requestJSON(base + "/api/user/self", {
+    headers: { Accept: "application/json", Authorization: token, "New-Api-User": id },
+  }, signal);
+  if (!result.ok) return result;
+  if (String(result.data.id ?? "") !== id) return { ok: false, why: "identity" };
+  const number = v => (typeof v === "number" || typeof v === "string" && v.trim()) ? Number(v) : NaN;
+  const quota = number(result.data.quota), used = number(result.data.used_quota);
+  if (![quota, used, quota + used].every(Number.isFinite) || quota < 0 || used < 0) {
+    return { ok: false, why: "missing-quota" };
+  }
+  return { ok: true, balance: { quota, used, total: quota + used, name: result.data.username || "" } };
+}
+
+export function accountError(why, operation) {
+  const reasons = {
+    "missing-password": "缺少账号或密码，请通过四项凭据入口重新配置",
+    "missing-token": "缺少系统访问令牌或已验证的用户 ID，请通过四项凭据入口重新配置",
+    "missing-id": "登录响应缺少用户 ID，不能确认账号身份",
+    "missing-quota": "系统访问令牌的余额接口没有返回有效额度字段",
+    verification: "站点要求二次验证，插件不会打开浏览器或绕过验证",
+    identity: "凭据对应的账号不一致，请核对账号与系统访问令牌",
+    rejected: "站点拒绝了凭据，请核对账号密码或系统访问令牌",
+    captcha: "接口被站点验证码拦截，插件不会打开浏览器或绕过验证码",
+    cancelled: "操作已取消",
+    network: "网络请求失败或超时",
+    upstream: "站点暂时不可用",
+    "invalid-response": "站点返回格式无法确认",
+    "untrusted-site": "账号凭据只能发送到 AgentRouter 国际站或国内站",
+  };
+  return `AgentRouter：${operation}失败（${reasons[why] || "站点响应异常"}）`;
+}
+
+export async function authorizeAccount(inputs, site = "org", signal) {
+  if (inputs?.site && !["org", "air"].includes(inputs.site)) {
+    return { type: "failed", error: "请选择 AgentRouter 国际站或国内站。" };
+  }
+  const parsed = parseCredentialBundle(inputs?.credentials);
+  if (parsed.error) return { type: "failed", error: parsed.error };
+  const { username, password, apiKey: key, accessToken } = parsed.credentials;
+  const selected = site === "air" || inputs?.site === "air" ? "air" : "org";
+  const base = SITES[selected].site;
+  const login = await passwordLogin(base, { metadata: { username, password } }, signal);
+  if (!login.ok) return { type: "failed", error: accountError(login.why, "登录") };
+  const metadata = { site: selected, username, password, accessToken, userId: login.userId,
+    ...(selected === "air" ? { apiBase: `${SITES.air.api}/v1` } : {}) };
+  // Check the token against the login identity without re-logging in or
+  // borrowing a session Cookie. Missing quota does not invalidate a token.
+  const balance = await tokenBalance(base, { metadata }, signal);
+  if (!balance.ok && balance.why !== "missing-quota") {
+    return { type: "failed", error: accountError(balance.why, "系统访问令牌验证") };
+  }
+  return { type: "success", key, metadata };
+}
+
+export async function passwordCheckin(base, auth, signal) {
+  if (!numericId(meta(auth, "userId"))) {
+    return { outcome: "ineligible", message: accountError("missing-id", "签到") };
+  }
+  const result = await passwordLogin(base, auth, signal);
+  if (!result.ok) {
+    const ineligible = ["missing-password", "missing-id", "rejected", "identity", "verification"].includes(result.why);
+    return { outcome: result.why === "captcha" ? "captcha" : ineligible ? "ineligible" : "failed",
+      message: accountError(result.why, "签到"),
+      ...(result.why === "rejected" ? { signIn: "expired" } : {}) };
+  }
+  if (result.checkedIn === true) return { outcome: "claimed", message: "AgentRouter：登录成功，站点报告 checked_in=true（已签到）；新增额度和金额以站点账单为准" };
+  if (result.checkedIn === false) return { outcome: "done", message: "AgentRouter：登录成功，本次未新增签到额度（checked_in=false）" };
+  return { outcome: "failed", message: "AgentRouter：登录成功但没有有效签到标记，无法确认额度发放" };
+}
