@@ -32,7 +32,7 @@ jobs:
       # No install scripts, real credentials, gateway calls or account sign-ins.
       - run: npm test
       - run: npm run test:policy
-      - run: python set-ar-headers.test.py
+      - run: python test/set-ar-headers.test.py
       - run: npm pack --dry-run
   gate:
     name: CI gate
