@@ -138,4 +138,4 @@ npm pack --dry-run
 
 变更记录见 [CHANGELOG.md](CHANGELOG.md)，当前认证、模型、余额与签到边界见 [docs/OPTIMIZATION.md](docs/OPTIMIZATION.md)。
 
-[贡献指南](CONTRIBUTING.md) · [安全政策](SECURITY.md) · [MIT](LICENSE)
+[贡献指南](CONTRIBUTING.md) · [MIT](LICENSE)

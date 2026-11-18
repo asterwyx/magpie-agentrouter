@@ -118,5 +118,4 @@ Run from the repository root.
 - `README.md`: install and current user behavior.
 - `docs/OPTIMIZATION.md`: current architecture, boundaries, and evidence sources.
 - `CONTRIBUTING.md`: contributor workflow and fix/release rules.
-- `SECURITY.md`: private reporting and secret-handling requirements.
 - `.github/workflows/ci.yml`: CI matrix and exact commands.
