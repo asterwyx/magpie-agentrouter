@@ -94,15 +94,14 @@ test("model headers always use Magpie's Codex CLI preset", () => {
   assert.equal(headers["X-Fixture"], "keep");
 });
 
-test("the domestic-site button keeps login on that site and checks the token on the international site", async t => {
+test("the domestic-site button keeps login and the token check on the selected site", async t => {
   const original = globalThis.fetch;
   t.after(() => { globalThis.fetch = original; });
   const hosts = [];
   globalThis.fetch = async (input, init) => {
     const url = new URL(String(input));
-    const balanceRequest = url.pathname === "/api/user/self";
     hosts.push(url.origin);
-    assert.equal(url.origin, balanceRequest ? "https://agentrouter.org" : "https://ps.air-outer.com");
+    assert.equal(url.origin, "https://ps.air-outer.com");
     if (url.pathname === "/api/user/login") return Response.json({ success: true, data: { id: 73, checked_in: false } });
     if (url.pathname === "/api/user/self") {
       assert.equal(new Headers(init.headers).get("New-Api-User"), "73");
@@ -117,7 +116,33 @@ test("the domestic-site button keeps login on that site and checks the token on 
   assert.equal(result.metadata.site, "air");
   assert.equal(result.metadata.apiBase, "https://ps.air-outer.com/v1");
   assert.equal(result.metadata.userId, "73");
-  assert.deepEqual(hosts, ["https://ps.air-outer.com", "https://agentrouter.org"]);
+  assert.deepEqual(hosts, ["https://ps.air-outer.com", "https://ps.air-outer.com"]);
+});
+
+test("domestic login falls back to the international site when its token check is unavailable", async t => {
+  const original = globalThis.fetch;
+  t.after(() => { globalThis.fetch = original; });
+  const hosts = [];
+  globalThis.fetch = async input => {
+    const url = new URL(String(input));
+    hosts.push(url.origin);
+    if (url.pathname === "/api/user/login") return Response.json({ success: true, data: { id: 73, checked_in: false } });
+    if (url.pathname === "/api/user/self" && url.origin === "https://ps.air-outer.com") {
+      return new Response("<html>waf</html>");
+    }
+    if (url.pathname === "/api/user/self" && url.origin === "https://agentrouter.org") {
+      return Response.json({ success: true, data: { id: 73, quota: 100, used_quota: 0 } });
+    }
+    assert.fail("unexpected request " + url);
+  };
+  const result = await (await plugin()).auth.methods[1].authorize(credentials);
+  assert.equal(result.type, "success");
+  assert.equal(result.metadata.site, "air");
+  assert.deepEqual(hosts, [
+    "https://ps.air-outer.com",
+    "https://ps.air-outer.com",
+    "https://agentrouter.org",
+  ]);
 });
 
 test("missing model key fails locally, never using any account credential as a key", async t => {

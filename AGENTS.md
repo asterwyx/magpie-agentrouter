@@ -63,6 +63,7 @@ Run from the repository root.
 
 - Username/password is used **only** for login and `auth.checkin`; API Key is used **only** for model discovery and model calls; system access token is used **only** for balance.
 - The user ID comes from the successful login response and is verified on subsequent balance/check-in calls. Do not add a separate user-ID prompt.
+- Balance prefers the selected site and may retry the same system token on the other trusted AgentRouter site only for network, upstream, captcha, invalid-response, or untrusted-site failures. Never fall back on rejected, identity, missing-token, or cancelled outcomes, and never use another credential.
 - Never use another credential as a fallback, never borrow a Cookie, and never send the four credentials together.
 - Never send account credentials to a host outside the two AgentRouter origins. Do not follow account-endpoint redirects.
 - Reject non-success HTTP status, invalid envelopes, mismatched identities, CAPTCHA, timeouts, and unexpected response shapes without claiming success.

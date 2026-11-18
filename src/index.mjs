@@ -1,6 +1,6 @@
 import { explainResponse } from "./response.mjs";
 import { SITES, meta, ACCOUNT_PROMPTS, authorizeAccount, usableModelKey,
-  tokenBalance, passwordCheckin, accountError } from "./account.mjs";
+  tokenBalanceWithFallback, passwordCheckin, accountError } from "./account.mjs";
 import { MODEL_CATALOG, PRICING_FALLBACK, enrichModel } from "./models.mjs";
 
 const PROVIDER = "agentrouter";
@@ -158,9 +158,11 @@ async function modelsOf(provider, { auth } = {}) {
 async function usageOf(getAuth, provider, context) {
   const auth = await getAuth();
   if (!auth) return { windows: [] };
-  // Balance always uses the international site. The selected site still
-  // controls model discovery and inference roots.
-  const result = await tokenBalance(SITES.org.site, auth, context?.signal);
+  // Balance prefers the site selected for model roots and falls back to the
+  // other trusted AgentRouter site when that site is unavailable.
+  const primary = siteBase(provider, auth);
+  const alternate = primary === SITES.air.site ? SITES.org.site : SITES.air.site;
+  const result = await tokenBalanceWithFallback(primary, alternate, auth, context?.signal);
   if (!result.ok) return {
     error: accountError(result.why, "余额查询") + "；剩余额度未知。未使用密码或 API Key 回退查询。",
     windows: [], ...(result.why === "rejected" || result.why === "identity" ? { signIn: "expired" } : {}),

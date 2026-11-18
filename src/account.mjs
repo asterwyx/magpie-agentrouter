@@ -127,6 +127,19 @@ export async function tokenBalance(base, auth, signal) {
   return { ok: true, balance: { quota, used, total: quota + used, name: result.data.username || "" } };
 }
 
+const BALANCE_FALLBACK_ERRORS = new Set([
+  "network", "upstream", "captcha", "invalid-response", "untrusted-site",
+]);
+
+// Balance prefers the account's selected site. Only a site-side failure
+// falls back to the other trusted AgentRouter site with the same token;
+// credential rejection and identity mismatch stay on the site that answered.
+export async function tokenBalanceWithFallback(primary, alternate, auth, signal) {
+  const first = await tokenBalance(primary, auth, signal);
+  if (first.ok || signal?.aborted || primary === alternate || !BALANCE_FALLBACK_ERRORS.has(first.why)) return first;
+  return tokenBalance(alternate, auth, signal);
+}
+
 export function accountError(why, operation) {
   const reasons = {
     "missing-password": "缺少账号或密码，请通过四项凭据入口重新配置",
@@ -166,9 +179,11 @@ export async function authorizeAccount(inputs, site = "org", signal) {
   const metadata = { site: selected, username, password, accessToken, userId: login.userId,
     ...(selected === "air" ? { apiBase: `${SITES.air.api}/v1` } : {}) };
   // Check the token against the login identity without re-logging in or
-  // borrowing a session Cookie. Balance always uses the international site,
-  // even when the account's model roots are domestic.
-  const balance = await tokenBalance(SITES.org.site, { metadata }, signal);
+  // borrowing a session Cookie. Prefer the selected site and fall back to
+  // the other trusted AgentRouter site only when that site is unavailable.
+  const primary = SITES[selected].site;
+  const alternate = selected === "air" ? SITES.org.site : SITES.air.site;
+  const balance = await tokenBalanceWithFallback(primary, alternate, { metadata }, signal);
   if (!balance.ok && balance.why !== "missing-quota") {
     return { type: "failed", error: accountError(balance.why, "系统访问令牌验证") };
   }

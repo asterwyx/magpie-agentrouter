@@ -60,11 +60,12 @@ for (const [name, responses] of [
   ["oversized reply", [new Response("x".repeat(64 * 1024 + 1))]],
   ["token rejected", [login(), Response.json({ success: false, message: inputs.accessToken })]],
   ["wrong token account", [login(), user({ id: 99, quota: 1, used_quota: 1 })]],
-  ["token captcha", [login(), new Response("<html>" + inputs.accessToken)]],
+  ["token captcha", [login(), new Response("<html>" + inputs.accessToken), new Response("<html>" + inputs.accessToken)]],
 ]) test(name + " does not save credentials or offer a browser flow", async t => {
-  const { methods } = await stub(t, responses);
+  const { methods, calls } = await stub(t, responses);
   const result = await methods[0].authorize(inputs);
   assert.equal(result.type, "failed");
+  if (name === "token captcha") assert.equal(calls.length, 3);
   assert.equal(result.key, undefined);
   assert.equal(result.metadata, undefined);
   assert.equal(result.url, undefined);
