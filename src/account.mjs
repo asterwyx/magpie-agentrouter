@@ -163,7 +163,7 @@ export async function authorizeAccount(inputs, site = "org", signal) {
   const base = SITES[selected].site;
   const login = await passwordLogin(base, { metadata: { username, password } }, signal);
   if (!login.ok) return { type: "failed", error: accountError(login.why, "登录") };
-  const metadata = { site: selected, username, password, accessToken, userId: login.userId,
+  const metadata = { site: selected, username, email: username, password, accessToken, userId: login.userId,
     ...(selected === "air" ? { apiBase: `${SITES.air.api}/v1` } : {}) };
   // Check the token against the login identity without re-logging in or
   // borrowing a session Cookie. Missing quota does not invalidate a token.
