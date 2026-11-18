@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.2.1 — 2026-11-18
+
+- Revert the 0.2.0 account-name change: `usage()` no longer returns the login email, and new sign-ins no longer save `metadata.email`.
+- Restore the account label Magpie derives from the API key.
+- No authentication, model, balance, or check-in request behavior changes.
+
 ## 0.2.0 — 2026-11-18
 
 - Show the AgentRouter login email as the Magpie account name instead of the API-key mask or the vendor's internal username, including when a balance read fails.
