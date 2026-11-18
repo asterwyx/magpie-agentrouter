@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.4.0 — 2026-11-18
+
+- Remove the `send-codex-headers` option and always send Magpie's Codex CLI preset on model requests: `User-Agent: codex_cli_rs/0.167.0 (Mac OS 26.6.0; arm64) Apple_Terminal/455`, `originator: codex_cli_rs`, `version: 0.167.0`, and `Accept: application/json`.
+- Custom metadata headers can add other fields but cannot replace these four.
+- No authentication, balance, check-in, or model routing behavior changes.
+
 ## 0.3.0 — 2026-11-18
 
 - Always read balance from the international site `https://agentrouter.org/api/user/self`, including for domestic-site accounts; token validation at sign-in does the same.
