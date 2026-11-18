@@ -22,6 +22,7 @@
     "src/body-inspection.mjs",
     "src/content-filter.mjs",
     "src/content-filter.example.json",
+    "assets/agentrouter.png",
     "README.md",
     "CHANGELOG.md",
     "docs",
