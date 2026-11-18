@@ -77,14 +77,15 @@ test("four answers complete login, models, balance and password check-in without
   assert.deepEqual(calls.map(c => c.path), ["/api/user/login", "/api/user/self", "/api/pricing", "/v1/models", "/api/user/self", "/api/user/login", "/v1/responses"]);
 });
 
-test("the domestic-site button uses its four separate credential fields and keeps all requests on that site", async t => {
+test("the domestic-site button keeps login on that site and checks the token on the international site", async t => {
   const original = globalThis.fetch;
   t.after(() => { globalThis.fetch = original; });
   const hosts = [];
   globalThis.fetch = async (input, init) => {
     const url = new URL(String(input));
+    const balanceRequest = url.pathname === "/api/user/self";
     hosts.push(url.origin);
-    assert.equal(url.origin, "https://ps.air-outer.com");
+    assert.equal(url.origin, balanceRequest ? "https://agentrouter.org" : "https://ps.air-outer.com");
     if (url.pathname === "/api/user/login") return Response.json({ success: true, data: { id: 73, checked_in: false } });
     if (url.pathname === "/api/user/self") {
       assert.equal(new Headers(init.headers).get("New-Api-User"), "73");
@@ -99,7 +100,7 @@ test("the domestic-site button uses its four separate credential fields and keep
   assert.equal(result.metadata.site, "air");
   assert.equal(result.metadata.apiBase, "https://ps.air-outer.com/v1");
   assert.equal(result.metadata.userId, "73");
-  assert.deepEqual(hosts, ["https://ps.air-outer.com", "https://ps.air-outer.com"]);
+  assert.deepEqual(hosts, ["https://ps.air-outer.com", "https://agentrouter.org"]);
 });
 
 test("missing model key fails locally, never using any account credential as a key", async t => {

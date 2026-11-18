@@ -150,7 +150,9 @@ async function modelsOf(provider, { auth } = {}, codex = true) {
 async function usageOf(getAuth, provider, context) {
   const auth = await getAuth();
   if (!auth) return { windows: [] };
-  const result = await tokenBalance(siteBase(provider, auth), auth, context?.signal);
+  // Balance always uses the international site. The selected site still
+  // controls model discovery and inference roots.
+  const result = await tokenBalance(SITES.org.site, auth, context?.signal);
   if (!result.ok) return {
     error: accountError(result.why, "余额查询") + "；剩余额度未知。未使用密码或 API Key 回退查询。",
     windows: [], ...(result.why === "rejected" || result.why === "identity" ? { signIn: "expired" } : {}),

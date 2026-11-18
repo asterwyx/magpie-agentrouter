@@ -166,8 +166,9 @@ export async function authorizeAccount(inputs, site = "org", signal) {
   const metadata = { site: selected, username, password, accessToken, userId: login.userId,
     ...(selected === "air" ? { apiBase: `${SITES.air.api}/v1` } : {}) };
   // Check the token against the login identity without re-logging in or
-  // borrowing a session Cookie. Missing quota does not invalidate a token.
-  const balance = await tokenBalance(base, { metadata }, signal);
+  // borrowing a session Cookie. Balance always uses the international site,
+  // even when the account's model roots are domestic.
+  const balance = await tokenBalance(SITES.org.site, { metadata }, signal);
   if (!balance.ok && balance.why !== "missing-quota") {
     return { type: "failed", error: accountError(balance.why, "系统访问令牌验证") };
   }

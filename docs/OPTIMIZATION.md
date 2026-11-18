@@ -14,8 +14,8 @@ Each field is validated before network access. A missing or malformed field, or 
 
 | Operation | Credential sent | Endpoint |
 |---|---|---|
-| Initial login and daily check-in | Username + password | `POST /api/user/login` |
-| Balance | System access token + login-derived user ID | `GET /api/user/self` |
+| Initial login and daily check-in | Username + password | Selected site `POST /api/user/login` |
+| Balance | System access token + login-derived user ID | International site `GET /api/user/self` |
 | Models and inference | Model API Key | `GET /v1/models`, `/v1/responses` |
 
 Account requests are restricted to the two trusted AgentRouter site origins and the two expected paths, with redirects disabled, a 64 KiB response bound, a 30 second deadline, and cancellation support. Password, API Key and system token are never used as fallbacks for another operation. No browser flow, copied Cookie, token-generation endpoint, or model-key auto-selection is used.
@@ -32,7 +32,7 @@ The pre-login fallback is the verified public pricing snapshot. Facts not suppli
 
 Magpie owns the daily schedule and calls the plugin's `auth.checkin`; the plugin does not create timers. A successful password-login response counts as `claimed` when `data.checked_in === true`; this is the site's checked-in state and the plugin cannot independently prove that the current login added a new credit, so the UI wording says the site reported the state. `false` is `done`, and a missing/non-boolean marker is not success. Captcha responses are reported as captcha and never bypassed.
 
-Balance is queried only when Magpie asks the usage hook. It does not trigger a login and does not retry through a different credential.
+Balance is queried only when Magpie asks the usage hook. It always reads the international site's `/api/user/self`, even when the account's model roots are domestic. It does not trigger a login and does not retry through a different credential. Login and check-in keep the selected site.
 
 ## UI and tests
 

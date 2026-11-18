@@ -8,6 +8,7 @@ async function usage(t, response, auth = { key: "sk-fixture", metadata }, provid
   t.after(() => { globalThis.fetch = original; });
   globalThis.fetch = async (url, init) => {
     calls.push(String(url));
+    assert.equal(new URL(url).origin, "https://agentrouter.org");
     assert.equal(new URL(url).pathname, "/api/user/self");
     const h = new Headers(init.headers);
     assert.equal(h.get("authorization"), metadata.accessToken);
@@ -29,6 +30,15 @@ test("management token reads balance and percentages, never logs in", async t =>
   assert.equal(result.windows[0].used, 25);
   assert.equal(result.windows[0].remaining, 75);
   assert.equal(calls.length, 1);
+});
+
+test("a domestic-site account reads balance from the international site", async t => {
+  const auth = { key: "sk-fixture", metadata: { ...metadata, site: "air", apiBase: "https://ps.air-outer.com/v1" } };
+  const { result, calls } = await usage(t, Response.json({
+    success: true, data: { id: 42, username: "fixture-user", quota: 75000000, used_quota: 25000000 },
+  }), auth);
+  assert.equal(result.balance, "$150.00");
+  assert.deepEqual(calls, ["https://agentrouter.org/api/user/self"]);
 });
 
 test("real zero balance stays zero", async t => {
