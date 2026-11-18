@@ -150,14 +150,10 @@ async function modelsOf(provider, { auth } = {}, codex = true) {
 async function usageOf(getAuth, provider, context) {
   const auth = await getAuth();
   if (!auth) return { windows: [] };
-  // Magpie shows usage().user as the account name. The login email is the
-  // account's identity; the vendor's username field may be an internal ID.
-  const accountName = String(meta(auth, "username") ?? "").trim();
   const result = await tokenBalance(siteBase(provider, auth), auth, context?.signal);
   if (!result.ok) return {
     error: accountError(result.why, "余额查询") + "；剩余额度未知。未使用密码或 API Key 回退查询。",
-    windows: [], ...(accountName ? { user: accountName } : {}),
-    ...(result.why === "rejected" || result.why === "identity" ? { signIn: "expired" } : {}),
+    windows: [], ...(result.why === "rejected" || result.why === "identity" ? { signIn: "expired" } : {}),
   };
   const bal = result.balance;
   const rateValue = Number(provider?.quotaPerUnit ?? 500000);
@@ -166,7 +162,6 @@ async function usageOf(getAuth, provider, context) {
   const left = dollars(bal.quota), spent = dollars(bal.used), whole = dollars(bal.total);
   const used = bal.total > 0 ? Math.min(100, Math.max(0, bal.used / bal.total * 100)) : 0;
   return {
-    ...(accountName || bal.name ? { user: accountName || bal.name } : {}),
     plan: bal.name || undefined, balance: `$${left.toFixed(2)}`,
     windows: [{ name: "Balance", used: Math.round(used * 10) / 10,
       remaining: Math.round((100 - used) * 10) / 10, amount: spent, limit: whole, unit: "usd",

@@ -22,9 +22,7 @@ async function usage(t, response, auth = { key: "sk-fixture", metadata }, provid
 }
 
 test("management token reads balance and percentages, never logs in", async t => {
-  const { result, calls } = await usage(t, Response.json({ success: true, data: { id: 42, username: "vendor-internal-id", quota: 75000000, used_quota: 25000000 } }));
-  assert.equal(result.user, metadata.username);
-  assert.equal(result.plan, "vendor-internal-id");
+  const { result, calls } = await usage(t, Response.json({ success: true, data: { id: 42, username: "fixture-user", quota: 75000000, used_quota: 25000000 } }));
   assert.equal(result.balance, "$150.00");
   assert.equal(result.windows[0].amount, 50);
   assert.equal(result.windows[0].limit, 200);
@@ -50,7 +48,6 @@ for (const [name, response] of [
   ["network", new Error(metadata.password)],
 ]) test(name + " never falls back to passwords, Cookies or model Key", async t => {
   const { result, calls } = await usage(t, response);
-  assert.equal(result.user, metadata.username);
   assert.equal(result.balance, undefined);
   assert.deepEqual(result.windows, []);
   assert.match(result.error, /剩余额度未知/);

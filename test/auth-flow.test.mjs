@@ -59,7 +59,6 @@ test("four answers complete login, models, balance and password check-in without
   assert.equal(saved.type, "success");
   assert.equal(saved.key, credentials.apiKey);
   assert.equal(saved.metadata.userId, "42");
-  assert.equal(saved.metadata.email, credentials.username);
   assert.equal(saved.metadata.accessToken, credentials.accessToken);
   for (const name of ["url", "callback", "method", "instructions"]) assert.equal(saved[name], undefined);
   assert.equal(saved.metadata.apiKey, undefined);

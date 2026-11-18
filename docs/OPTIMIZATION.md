@@ -34,8 +34,6 @@ Magpie owns the daily schedule and calls the plugin's `auth.checkin`; the plugin
 
 Balance is queried only when Magpie asks the usage hook. It does not trigger a login and does not retry through a different credential.
 
-The usage result also carries the login email as `user`, which Magpie shows as the account name. It is preferred over the vendor's internal `username` and the API-key mask, and it remains available when the balance read fails.
-
 ## UI and tests
 
 `npm test` covers four-field credential validation, site separation, model metadata enrichment, credential request boundaries, balance, check-in and existing request/response compatibility. `npm run test:magpie-ui` optionally verifies the actual Magpie UI with an isolated loopback Magpie process and fake AgentRouter service. It checks the two site buttons, four separate prompts, one final sign-in submission and no browser popup.
