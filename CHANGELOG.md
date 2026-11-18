@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.1.3 — 2026-11-18
+
+- Remove the optional standalone local check-in tool, including its Windows ACL implementation, tests, documentation, and CI fixture step. Magpie's account/password `auth.checkin` hook remains the only check-in path.
+- Move runtime modules to `src/` and all test files to `test/`; package entry points now use `src/index.mjs`.
+- Move the text-filter example beside the filter implementation at `src/content-filter.example.json`.
+- No runtime authentication behavior changes from 0.1.2.
+
 ## 0.1.2 — 2026-11-18
 
 - Remove stale test fixtures, CI warnings, and documentation references for retired GitHub, OAuth, and standalone system-token login methods.
