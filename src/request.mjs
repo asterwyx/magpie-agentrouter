@@ -1,4 +1,3 @@
-import { redactResponsesBody } from "./content-filter.mjs";
 import { readCloneText } from "./body-inspection.mjs";
 import { repairSessionResources } from "./session-repair.mjs";
 
@@ -45,8 +44,8 @@ export async function prepareResponsesRequest(input, init = {}) {
   return prepareRequest(input, init);
 }
 
-export async function prepareRequest(input, init = {}, { portableResponses = true, textFilter = null, sessionRepair = false } = {}) {
-  if (!portableResponses && !textFilter && !sessionRepair) return init;
+export async function prepareRequest(input, init = {}, { portableResponses = true, sessionRepair = false } = {}) {
+  if (!portableResponses && !sessionRepair) return init;
   const request = input instanceof Request ? input : null;
   let pathname;
   try { pathname = new URL(request ? request.url : input).pathname; } catch { return init; }
@@ -66,18 +65,16 @@ export async function prepareRequest(input, init = {}, { portableResponses = tru
   if (!body || typeof body !== "object" || Array.isArray(body)) return init;
   const repaired = sessionRepair === true ? repairSessionResources(body) : { body, changed: false };
   body = repaired.body;
-  const filtered = redactResponsesBody(body, textFilter);
-  body = filtered.body;
   const replayed = portableResponses && replayInline(body);
-  if (!repaired.changed && !filtered.replacements && !replayed) return init;
+  if (!repaired.changed && !replayed) return init;
   if (repaired.changed || replayed) body.store = false;
   for (const name of ["content-length", "content-md5", "digest", "content-digest"]) headers.delete(name);
   return { ...init, body: JSON.stringify(body), headers };
 }
 
 function replayInline(body) {
-  // Pointers carry context we cannot retrieve. Filtering visible prose must not
-  // silently discard that context or turn a continuation into a new conversation.
+  // Pointers carry context we cannot retrieve. Never silently discard that
+  // context or turn a continuation into a new conversation.
   if (!Array.isArray(body.input) || body.previous_response_id || body.conversation ||
       body.input.some(item => item?.type === "item_reference")) return false;
   let changed = false;

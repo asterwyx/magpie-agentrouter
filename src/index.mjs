@@ -1,6 +1,5 @@
 import { explainResponse } from "./response.mjs";
 import { prepareRequest } from "./request.mjs";
-import { loadTextFilter } from "./content-filter.mjs";
 import { SessionRepairError } from "./session-repair.mjs";
 import { SITES, meta, ACCOUNT_PROMPTS, authorizeAccount, usableModelKey,
   tokenBalance, passwordCheckin, accountError } from "./account.mjs";
@@ -179,7 +178,6 @@ async function checkinOf(getAuth, provider, context) {
 export const AgentRouterAuthPlugin = async (input, options = {}) => {
   const codex = () => input?.magpie?.option?.(PROVIDER, "send-codex-headers") !== false;
   const portable = () => input?.magpie?.option?.(PROVIDER, "portable-responses") !== false;
-  const filtering = () => input?.magpie?.option?.(PROVIDER, "text-filter") !== false;
   const repairing = () => input?.magpie?.option?.(PROVIDER, "codex-session-repair") === true;
   return {
     config: async cfg => {
@@ -198,7 +196,6 @@ export const AgentRouterAuthPlugin = async (input, options = {}) => {
       ],
       async loader(getAuth, provider) {
         const auth = (await getAuth()) ?? {};
-        const textFilter = filtering() ? await loadTextFilter() : null;
         return {
           apiKey: apiKey(auth) || "agentrouter",
           async fetch(input, init = {}) {
@@ -215,7 +212,7 @@ export const AgentRouterAuthPlugin = async (input, options = {}) => {
             let prepared;
             try {
               prepared = await prepareRequest(input, { ...init, headers: h }, {
-                portableResponses: portable(), textFilter: filtering() ? textFilter : null, sessionRepair: repairing(),
+                portableResponses: portable(), sessionRepair: repairing(),
               });
             } catch (error) {
               if (!(error instanceof SessionRepairError)) throw error;
@@ -229,14 +226,12 @@ export const AgentRouterAuthPlugin = async (input, options = {}) => {
       },
       usage: usageOf, checkin: checkinOf,
       options: [
-        { key: "text-filter", label: "发送前替换本地词表中的文字", default: true,
-          description: "使用 content-filter.local.json 中自行配置的词表，不猜测拦截词。保留可识别的 Markdown 代码、工具数据和加密状态；修改词表后需重新加载插件。" },
         { key: "portable-responses", label: "内联发送完整的 Responses 历史", default: true,
-          description: "仅在内容完整可内联时移除资源绑定的条目 ID，保留 call_id 和加密内容。只有引用的历史仍依赖原资源；关闭只停用无损内联，文字替换和有损会话清理各自独立。" },
+          description: "仅在内容完整可内联时移除资源绑定的条目 ID，保留 call_id 和加密内容。只有引用的历史仍依赖原资源；关闭只停用无损内联，有损会话清理独立。" },
         { key: "send-codex-headers", label: "发送 Codex 客户端请求头", default: true,
           description: "AgentRouter 仅接受受认可的客户端标识。开启时附带 Codex CLI 的默认 User-Agent；关闭时不添加该标识，仍发送自行配置的请求头和默认 Accept。" },
         { key: "codex-session-repair", label: "清理 Codex 会话的旧资源绑定（有损）", default: false,
-          description: "默认关闭。发送前清理旧资源 ID、加密/压缩历史及仅引用条目，保留明文消息和工具关联。可能丢失压缩上下文；不修改本地会话文件或数据库，与无损内联和文字替换独立。",
+          description: "默认关闭。发送前清理旧资源 ID、加密/压缩历史及仅引用条目，保留明文消息和工具关联。可能丢失压缩上下文；不修改本地会话文件或数据库，与无损内联独立。",
           confirm: "开启后会丢弃发送副本中的加密、压缩及仅引用历史，可能丢失上下文。不会修复本地日志或数据库；关闭后下一次请求恢复原有处理。确认开启？" },
       ],
     },

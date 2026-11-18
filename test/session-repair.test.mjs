@@ -60,7 +60,7 @@ async function capture(t, options = {}, body = history(), input = url, extra = {
 test("provider switches have Chinese labels and descriptions with unchanged existing defaults", async () => {
   const p = await plugin();
   assert.deepEqual(p.auth.options.map(({ key, default: value }) => [key, value]), [
-    ["text-filter", true], ["portable-responses", true], ["send-codex-headers", true],
+    ["portable-responses", true], ["send-codex-headers", true],
     ["codex-session-repair", false],
   ]);
   for (const option of p.auth.options) {
@@ -159,7 +159,7 @@ test("Codex custom tool calls keep free-form input, namespace and the paired res
 });
 
 test("the installed loader can switch cleanup on and off between requests without re-login", async t => {
-  const options = { "codex-session-repair": true, "portable-responses": false, "text-filter": false };
+  const options = { "codex-session-repair": true, "portable-responses": false };
   const { loader, init, calls, response } = await capture(t, options);
   assert.equal(response.status, 200);
   assert.equal(JSON.parse(calls[0].init.body).previous_response_id, undefined);
@@ -357,14 +357,13 @@ test("cleanup retains the existing four MiB UTF-8 inspection bound", async () =>
   assert.equal(await prepareRequest(url, init, repairOptions), init);
 });
 
-test("cleanup, prose filtering and portable replay stay independently configurable in an installed package", async t => {
+test("cleanup and portable replay stay independently configurable in an installed package", async t => {
   const directory = await mkdtemp(join(tmpdir(), "ar-session-repair-"));
   t.after(() => rm(directory, { recursive: true, force: true }));
   const pkg = JSON.parse(await readFile(new URL("../package.json", import.meta.url), "utf8"));
   for (const file of pkg.files.filter(file => file.endsWith(".mjs"))) {
     await copyFile(new URL("../" + file, import.meta.url), join(directory, file.split("/").pop()));
   }
-  await writeFile(join(directory, "content-filter.local.json"), JSON.stringify({ terms: ["Checking"] }));
   const installedPlugin = (await import(pathToFileURL(join(directory, "index.mjs")).href)).default;
   const options = {};
   const p = await installedPlugin({ magpie: { option: (_provider, key) => options[key] } });
@@ -372,8 +371,8 @@ test("cleanup, prose filtering and portable replay stay independently configurab
   t.after(() => { globalThis.fetch = originalFetch; });
   let sent;
   globalThis.fetch = async (_input, init) => { sent = init; return new Response("ok"); };
-  for (const repair of [false, true]) for (const portable of [false, true]) for (const filter of [false, true]) {
-    Object.assign(options, { "codex-session-repair": repair, "portable-responses": portable, "text-filter": filter });
+  for (const repair of [false, true]) for (const portable of [false, true]) {
+    Object.assign(options, { "codex-session-repair": repair, "portable-responses": portable });
     const loader = await p.auth.loader(async () => ({ key: "synthetic-key" }), {});
     const body = { store: true, input: [assistant(), { type: "reasoning", id: id("rs"), encrypted_content: "synthetic-opaque" }] };
     await loader.fetch(url, { method: "POST", body: JSON.stringify(body) });
@@ -381,7 +380,7 @@ test("cleanup, prose filtering and portable replay stay independently configurab
     assert.equal(result.input.length, repair ? 1 : 2);
     assert.equal(result.input[0].id, repair || portable ? undefined : body.input[0].id);
     assert.equal(result.input[0].content[0].type, "output_text");
-    assert.equal(result.input[0].content[0].text, filter ? "[FILTERED] the result." : "Checking the result.");
+    assert.equal(result.input[0].content[0].text, "Checking the result.");
     assert.equal(result.store, !(repair || portable));
     if (!repair) assert.deepEqual(result.input[1], body.input[1]);
     assert.equal(body.input[0].content[0].text, "Checking the result.");

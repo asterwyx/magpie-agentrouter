@@ -32,7 +32,7 @@ function assessPullRequest(pr, files) {
     }
   }
   const names = files.map(file => file.filename);
-  if (names.some(name => /(?:^|\/)src\/(request|content-filter|body-inspection)\.mjs$/.test(name))) {
+  if (names.some(name => /(?:^|\/)src\/(request|body-inspection)\.mjs$/.test(name))) {
     warnings.push('请求/内容边界：人工核对 assistant output_text、call_id、opaque reasoning/引用、显式降级及不自动重试约定；补独立反例，不仅改旧测试预期。');
   }
   if (names.some(name => /(?:^|\/)src\/(index|account|models)\.mjs$/.test(name))) {
