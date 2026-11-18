@@ -27,7 +27,6 @@
 | `src/body-inspection.mjs` | Bounded response-body inspection |
 | `test/` | All Node tests and fixtures; no production tests |
 | `assets/agentrouter.png` | AgentRouter source icon; `package.json` also embeds it as data URI |
-| `docs/OPTIMIZATION.md` | Current design boundaries and evidence sources |
 | `README.md` | English user-facing install, configuration, balance, and check-in instructions |
 | `CHANGELOG.md` | English versioned user-visible changes |
 | `.github/workflows/ci.yml` | Ubuntu/Windows × Node 20/22/24 CI |
@@ -117,6 +116,5 @@ Run from the repository root.
 
 - `README.md`: install and current user behavior.
 - `CHANGELOG.md`: versioned changes.
-- `docs/OPTIMIZATION.md`: current architecture, boundaries, and evidence sources.
 - `CONTRIBUTING.md`: contributor workflow and fix/release rules.
 - `.github/workflows/ci.yml`: CI matrix and exact commands.
