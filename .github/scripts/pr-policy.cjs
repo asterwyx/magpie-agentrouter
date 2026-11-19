@@ -3,10 +3,20 @@
 const MARKER = '<!-- agentrouter-pr-review -->';
 const CHECK_NAME = 'PR policy';
 
+function stripHtmlComments(input) {
+  let current = input || '';
+  let previous;
+  do {
+    previous = current;
+    current = current.replace(/<!--[\s\S]*?-->/g, '');
+  } while (current !== previous);
+  return current;
+}
+
 function assessPullRequest(pr, files) {
   const errors = [];
   const warnings = [];
-  const body = (pr.body || '').replace(/<!--[\s\S]*?-->/g, '').trim();
+  const body = stripHtmlComments(pr.body || '').trim();
   const dependencyUpdate = pr.user?.login === 'dependabot[bot]';
   if (!/^(feat|fix|docs|test|refactor|perf|build|ci|chore|revert)(\([a-z0-9._/-]+\))?!?:\s+\S/i.test(pr.title || '')) {
     errors.push('标题使用 Conventional Commits，例如 fix(responses): preserve assistant output_text。');
