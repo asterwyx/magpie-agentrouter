@@ -107,6 +107,15 @@ Run from the repository root.
 - Before release, the tree must be clean and all verification must pass. Do not publish unverified code, real credentials, private data, or unsupported claims.
 - Release notes describe only verified behavior and current limitations; they are not a substitute for tests.
 
+### Release Descriptions
+
+- Write release notes for users, not maintainers: describe only external behavior, compatibility, and user-visible changes.
+- Do not mention documentation, tests, CI, refactors, file moves, internal module or field names, implementation details, or statements that something did not change.
+- Do not describe a release with no external change. Omit it from `CHANGELOG.md` and leave its release description empty.
+- Keep each version's notes limited to what existed at that release. Never mention a later version or a change made after it.
+- Keep GitHub release notes and `CHANGELOG.md` synchronized: same facts, same language as the user documentation.
+- Mention only verified behavior and known limitations; never present an unverified feature as released.
+
 ## Completion Report
 
 - State modified files, the smallest behavioral change, commands run, and exact test/CI results.
