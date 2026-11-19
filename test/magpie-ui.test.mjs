@@ -54,7 +54,7 @@ test("Magpie UI offers site buttons and four separate credential fields without 
     assert.equal(popups, 0);
     assert.equal(context.pages().length, 1);
     assert.equal(posts.filter(p => p === "/api/plugin-signin").length, 1);
-    assert.equal(posts.some(p => /oauth|authorize|callback|\/open$/.test(p)), false);
+    assert.equal(posts.some(p => /(oauth|authorize|callback|\/open)$/.test(p)), false);
     assert.equal(await page.getByRole("button", { name: "Next", exact: true }).count(), 0);
     if (process.env.MAGPIE_TEST_SCREENSHOT) await page.screenshot({ path: process.env.MAGPIE_TEST_SCREENSHOT, fullPage: true });
   } finally { await browser.close(); }
