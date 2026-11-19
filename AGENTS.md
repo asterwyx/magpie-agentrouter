@@ -102,6 +102,7 @@ Run from the repository root.
 - One behavior-change commit corresponds to one minor version increment and its own release; reset the patch version to zero, for example `0.1.3` → `0.2.0`.
 - Restoring intended behavior is a fix; intentionally adding, changing, or removing package behavior is a behavior change.
 - Put version number, `CHANGELOG.md`, and release notes in a separate release commit. Push that commit, create the matching `vX.Y.Z` tag, then create the GitHub release.
+- Keep release notes and changelog entries chronological: an older version must not mention a later version or a change made after it.
 - Changes that neither fix package behavior nor change it, such as CI, documentation, or test maintenance, must be committed and pushed without a version increment, release tag, or GitHub release. Classify changes by their effect on the package, not by the files they touch; a CI path correction alone does not require a release.
 - Before release, the tree must be clean and all verification must pass. Do not publish unverified code, real credentials, private data, or unsupported claims.
 - Release notes describe only verified behavior and current limitations; they are not a substitute for tests.
