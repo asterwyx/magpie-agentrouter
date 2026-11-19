@@ -11,8 +11,8 @@ body:
     id: versions
     attributes:
       label: 版本与环境
-      description: 插件版本、magpie 版本、Node.js / Python 版本及操作系统；未涉及的组件请注明。
-      placeholder: "插件版本：…；magpie：…；Node.js：…；Python：…；操作系统：…"
+      description: 插件版本、magpie 版本、Node.js 版本及操作系统；未涉及的组件请注明。
+      placeholder: "插件版本：…；magpie：…；Node.js：…；操作系统：…"
     validations:
       required: true
   - type: textarea
